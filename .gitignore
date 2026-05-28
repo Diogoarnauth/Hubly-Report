@@ -1,0 +1,36 @@
+# --- Ficheiros de compilacao LaTeX ---
+*.aux
+*.log
+*.pdf
+*.toc
+*.lof
+*.lot
+*.lol
+*.out
+*.synctex.gz
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.idx
+*.ilg
+*.ind
+*.dvi
+*.log
+*.blg
+*.brf
+
+# --- Pastas geradas pelo LaTeX ---
+# Algumas distros LaTeX criam estas pastas
+/auto/
+/_minted*
+
+# --- IDEs / Editores ---
+# Se usares o VSCode
+.vscode/
+# Se usares o TeXstudio ou outros
+*.user
+
+# --- Sistema Operacional ---
+.DS_Store
+Thumbs.db

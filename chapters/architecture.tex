@@ -1,0 +1,35 @@
+\chapter{Architecture}\label{ch:architecture}
+This chapter details the containerized, multi-tiered architecture of the \textbf{Hubly} platform. We explore the structural layout, the isolation of deployment environments, and how the distinct layers—Frontend, Backend, and Database—interact through secure communication protocols.
+
+\section{General Structure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{img/general_structure.png}
+    \caption{Infrastructure and Network Topology of Hubly}
+    \label{fig:architecture}
+\end{figure}
+
+The architecture of the Hubly project follows a professional, multi-tiered design decoupled into isolated environments using Docker containers. The structural layout and network topology are conceptually illustrated in Figure \ref{fig:architecture}.
+
+As depicted in the diagram, incoming client traffic (\textit{Requests}) does not interact directly with the application services. Instead, an \textbf{Nginx} container acts as a reverse proxy and entry point, managing incoming requests and routing them efficiently to the appropriate internal services based on the context of the URL.
+
+The architecture is divided into three primary functional layers, segregated by virtual container networks to guarantee security and a clear separation of concerns:
+
+\begin{itemize}
+    \item \textbf{Presentation Layer (Frontend):} Implemented as a high-performance web dashboard using React and Next.js. It handles user interaction, UI rendering, and dispatches asynchronous requests to the API. It resides exclusively within the internal \texttt{app-net} network.
+    \item \textbf{Application Layer (Backend):} Developed in ASP.NET Core, this layer encapsulates the core business logic, handles multi-criteria search queries, and manages private CRM communication tags. It serves as a bridge between the presentation and data environments, belonging simultaneously to both virtual networks (\texttt{app-net} and \texttt{db-net}).
+    \item \textbf{Data Layer (Database):} Powered by a PostgreSQL relational database engine, this layer is responsible for data persistence, storing entity attributes, and tracking conversation states.
+\end{itemize}
+
+\subsection{Network Isolation and Communication Protocols}
+Communication between the components is strictly governed by Docker network boundaries to enforce security. The infrastructure is segmented into two distinct virtual bridges:
+\begin{enumerate}
+    \item \textbf{\texttt{app-net}:} A network dedicated to web routing. The Nginx proxy communicates with the Frontend and Backend via HTTP. The web interface dispatches requests exclusively through a secure RESTful API exposed by the backend container.
+    \item \textbf{\texttt{db-net}:} A heavily isolated backend network. The Database is entirely hidden from the external world and the Frontend layer. The Backend communicates with PostgreSQL through Entity Framework Core over this private network, abstracting database operations and drastically reducing the platform's attack surface.
+\end{enumerate}
+
+This network infrastructure ensures that Hubly is not only modular and maintainable from a software engineering perspective but also robust, secure, and ready for containerized enterprise deployment.
+
+\input{sections/backend_technologies}
+\input{sections/frontend_technologies}

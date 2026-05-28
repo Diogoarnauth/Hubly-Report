@@ -1,0 +1,38 @@
+\section{Backend Key Functionalities}
+
+\subsection{User Management and Authentication}
+The user management module forms the core of the system, handling identity lifecycle, security, and profile interactions. While the system provides standard CRUD operations for user data, its implementation prioritizes security and data consistency.
+
+\subsubsection{Secure Identity Lifecycle and Authentication}
+Authentication is handled through a stateless token-based mechanism. The system enforces several security measures:
+\begin{itemize}
+    \item \textbf{Secure Password Handling}: Passwords are never stored in plain text. We utilize a dedicated \texttt{IPasswordEncoder} to create validation information (hashing), ensuring robust protection against credential exposure.
+    \item \textbf{Token Management}: The system manages user sessions by limiting the number of active tokens per user. When the limit is reached, the system automatically invalidates the oldest session, maintaining a balanced token lifecycle.
+    \item \textbf{Email Verification Pipeline}: To ensure user authenticity, the registration process triggers an asynchronous email confirmation flow. This uses a numeric code generator with a strictly defined expiration policy, enforced by the persistence layer.
+\end{itemize}
+
+\subsubsection{Transactional Integrity in Domain Operations}
+A defining characteristic of our backend is the use of an \textbf{Atomic Transaction Manager}. All sensitive user operations—such as registration, password changes, or email verification—are wrapped within transactional contexts. 
+This ensures that actions such as creating a user record, generating an initial confirmation code, and updating security metadata are executed as a single unit of work. If any part of the operation fails, the system triggers a rollback, preventing the persistence of inconsistent or orphaned data. This approach is further reinforced by the \textit{OneOf} functional pattern, which forces explicit error handling for every business rule violation (e.g., duplicate emails, invalid credentials), providing predictable API responses.
+
+\subsection{Creator Ecosystem and Interaction Framework}
+Beyond identity, the platform enables complex interactions between creators and companies through a robust ecosystem module.
+
+\subsubsection{Creator Profile and Social Platform Integration}
+The platform allows creators to maintain multiple social profiles, each characterized by specific metrics (followers, pricing, sectors). 
+\begin{itemize}
+    \item \textbf{Dynamic Profiling}: The system manages the linkage between a single user account and multiple social profiles, supporting heterogeneous platform data.
+    \item \textbf{Discovery and Reputation}: We implement a search mechanism that filters creators based on multi-dimensional criteria (e.g., price ranges, sectors, reach). Additionally, a rating system allows for social proof, with built-in validation to prevent self-rating bias.
+\end{itemize}
+
+\subsubsection{Messaging and Conversation Architecture}
+The core of the business interaction occurs within the conversation module, designed to facilitate secure and trackable communication:
+\begin{itemize}
+    \item \textbf{Participant Abstraction}: Conversations support different participant types (Company vs. Creator Social Profile) through a flexible participant model, ensuring the conversation context is correctly mapped to the entity performing the action.
+    \item \textbf{Conversation Management}: Beyond standard messaging (sending, editing, deleting), the system handles complex UI/UX requirements such as unread message counting, marking messages as read (with synchronization based on message IDs), and real-time state tracking.
+    \item \textbf{Organization through Tagging}: To handle high-volume interactions, we introduced a \textit{Conversation Tagging} system. Users can define custom labels with unique color codes, allowing them to categorize and filter their workflow within the dashboard efficiently.
+\end{itemize}
+
+
+
+ACABARRRRRR

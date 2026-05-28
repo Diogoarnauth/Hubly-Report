@@ -1,0 +1,172 @@
+\documentclass[a4paper,openany,twoside,11pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{hyperref}
+\usepackage{afterpage}
+\usepackage{lipsum}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage[Algoritmo]{algorithm}
+\usepackage{algorithmicx}
+\usepackage{xcolor}
+\usepackage{algpseudocode}
+\usepackage{subcaption}
+\renewcommand{\algorithmicrequire}{\textbf{Dados: }}
+\renewcommand{\algorithmicensure}{\textbf{Resultado: }}
+\newcommand{\blankpage}{%
+    \newpage
+    \null
+    \thispagestyle{empty}%
+    \vspace*{\fill}%
+    \begin{center}%
+        This page is supposed to be blank.%
+    \end{center}%
+    \vspace*{\fill}%
+    \newpage%
+}
+\addto{\captionsenglish}{\renewcommand{\bibname}{References}}
+\addto{\captionsenglish}{\renewcommand{\contentsname}{Table of Contents}}
+\addto{\captionsenglish}{\renewcommand{\appendixname}{Appendix}}
+
+\usepackage{xcolor}
+\definecolor{codebg}{rgb}{0.95,0.95,0.97}
+\definecolor{bluekeywords}{rgb}{0.00,0.25,0.65}
+\definecolor{greencomments}{rgb}{0.20,0.60,0.20}
+\definecolor{redstrings}{rgb}{0.75,0.00,0.15}
+\definecolor{graynumbers}{rgb}{0.50,0.50,0.50}
+
+\usepackage{listings}
+\lstset{
+  language=[Sharp]C,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{bluekeywords}\bfseries,
+  commentstyle=\color{greencomments}\itshape,
+  stringstyle=\color{redstrings},
+  numberstyle=\tiny\color{graynumbers},
+  numbers=left,
+  numbersep=8pt,
+  stepnumber=1,
+  firstnumber=1,
+  frame=single,
+  rulecolor=\color{graynumbers},
+  frameround=tttt,
+  breaklines=true,
+  breakatwhitespace=true,
+  showstringspaces=false,
+  captionpos=b,
+  xleftmargin=4pt,
+  xrightmargin=4pt,
+  tabsize=2,
+  literate={~} {$\sim$}{1}
+}
+
+
+\setlength{\textheight}{24.00cm}
+\setlength{\textwidth}{15.50cm}
+\setlength{\topmargin}{0.35cm}
+\setlength{\headheight}{0cm}
+\setlength{\headsep}{0cm}
+\setlength{\oddsidemargin}{0.25cm}
+\setlength{\evensidemargin}{0.25cm}
+
+\title{
+   \vspace{-50mm}
+   \begin{minipage}[l]{\textwidth}
+      \hspace{-20mm}\resizebox{75mm}{!}{\includegraphics{./img/logoISEL.png}}\\
+   \end{minipage}\\[20mm]
+   {\bf Hubly}
+}
+
+\author{
+\begin{tabular}{ll}
+             & Diogo Leitão  \\
+             & Carolina Coelho \\[50mm] 
+\end{tabular}}
+
+\date{
+\begin{tabular}{ll}
+  {Supervisor:} & José Luís Falcão Cascalheira \\
+\end{tabular}\\[10mm]
+Report for the project carried out in the scope of Project and Seminar\\
+Degree in Computer Science and Engineering\\[20mm]
+\today}
+
+
+\begin{document}
+\pagenumbering{roman}
+\thispagestyle{empty}
+\maketitle
+
+\baselineskip 18pt
+
+\blankpage
+
+\cleardoublepage
+\setcounter{page}{1}
+\begin{center}
+\textsc{\LARGE Instituto Superior de Engenharia de Lisboa}\\[50mm]
+
+{\large \bf  Hubly}\\[20mm]
+
+\begin{tabular}{rl}
+  51634  & Diogo Leitão\\[10mm]
+           & \rule{75mm}{0.5pt}\\[5mm]
+  51661  & Carolina Coelho\\[10mm]
+           & \rule{75mm}{0.5pt}\\[5mm]
+\end{tabular}\\[10mm]
+
+\begin{tabular}{rl}
+  Supervisor: & José Luís Falcão Cascalheira\\[10mm]
+                & \rule{75mm}{0.5pt}\\[5mm]
+\end{tabular}\\[10mm]
+
+Report for the project carried out in the scope of Project and Seminar\\
+Degree in Computer Science and Engineering\\[20mm]
+\today\\
+\end{center}
+
+\blankpage
+
+\input{chapters/abstract}
+
+\blankpage
+
+\tableofcontents
+\listoffigures
+\lstlistoflistings
+
+%\listoftables
+
+
+\setcounter{page}{1}
+\pagenumbering{arabic}
+
+\input{chapters/introduction}
+\input{chapters/similar_systems}
+
+\input{chapters/architecture}
+
+\input{chapters/backend}
+\input{chapters/database}
+\input{chapters/frontend_web}
+\input{chapters/concurrency}
+\input{chapters/tests}
+\input{chapters/conclusion}
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+\addcontentsline{toc}{chapter}{References}
+
+\appendix
+\chapter{Complete ER Model}
+\label{app:er_model}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.2\textwidth, angle=90]{./img/ER_Model.png}
+    \caption{Complete ER Model}
+    \label{fig:er_model}
+\end{figure}
+
+\end{document}
