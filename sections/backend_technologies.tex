@@ -15,76 +15,42 @@ Our selection of ASP.NET Core was driven by the following factors:
 \subsection{Entity Framework Core}
 Entity Framework Core (EF Core) \cite{entityframeworkcore} is the lightweight and extensible object-relational mapper (ORM) for .NET. It simplifies data access by allowing developers to interact with the underlying database using strongly-typed C\# objects. By abstracting raw SQL queries, EF Core promotes cleaner, maintainable code while providing a robust interface for complex database operations.
 
+\subsection{BCrypt.Net-Next}
+BCrypt.Net-Next \cite{bcrypt} is a high-performance security library used for robust password and token hashing. Unlike standard hashing algorithms, BCrypt incorporates a dynamic \textit{salt} mechanism, which adds a unique, random string to each piece of data before the hashing process. This creates a powerful defense against rainbow table attacks and credential exposure.
+
+In our implementation, we utilize this library to secure both user passwords and sensitive tokens. By enforcing a cost factor, BCrypt ensures that the hashing process is computationally expensive, making it significantly harder for attackers to perform brute-force attempts. This integration is central to our security layer, ensuring that even in the event of a database compromise, all sensitive information remains protected by cryptographic best practices.
 
 
-/*
-\subsection{Swagger and Swashbuckle}
+\subsection{Profanity Detector}
+The Profanity Detector \cite{profanitydetector} is a lightweight utility library integrated into our backend to ensure a family-friendly environment for all users. By maintaining an extensive, pre-defined dictionary of offensive terms, it allows for real-time validation of user-generated content before it is persisted in the database.
 
-The project implementation benefited significantly from Swashbuckle\cite{swashbuckle}, a library that integrates the Swagger/OpenAPI\cite{swagger} specification into ASP.NET Core.
-
-This library eliminated the need to manually write OpenAPI documentation instead of investing time in crafting detailed YAML specifications, Swashbuckle automatically generated interactive API documentation directly from our code. We also activated the option of xml comments to enhance the quality and clarity of the documentation.
-
-By integrating Swashbuckle into our ASP.NET Core application, we ensured that documentation remained synchronized with the actual implementation. This consistent documentation proved particularly valuable during parallel development.
-*/
+In our implementation, this library acts as a content moderation layer, automatically scanning messages and profile information for inappropriate language. This approach shifts the responsibility of content filtering from manual human moderation to an automated system, ensuring that the platform remains professional and compliant with community standards without introducing significant latency to user interactions.
 
 \subsection{Mapster}
-Mapster is a high-performance mapping library for .NET applications\cite{mapster}. It provides an efficient way to transform data between different object types without writing repetitive mapping code.
+Mapster is a high-performance mapping library specifically designed for .NET ecosystems \cite{mapster}. It offers an optimized solution for object-to-object transformation, effectively eliminating the need for boilerplate mapping logic.
 
-The decision to use Mapster over other mapping libraries like AutoMapper was driven by several key advantages:
+We selected Mapster as our primary mapping solution due to its clear technical advantages over alternatives like AutoMapper:
 \begin{itemize}
-  \item Higher Performance: Mapster is 4x faster than other mapping libraries.
-  \item Minimal configuration
+\item \textbf{Superior Performance}: Mapster delivers execution speeds approximately four times faster than comparable libraries.
+\item \textbf{Low-Maintenance Configuration}: It requires significantly less setup, allowing for a more streamlined development process.
 \end{itemize}
 
-In our application, Mapster plays a crucial role in transforming data between our domain models and DTOs in our API controllers without the need to write repetitive mapping code.
+Within our application, Mapster is essential for decoupling our domain models from the Data Transfer Objects (DTOs) exposed through our API controllers. By centralizing these transformations, we avoid the maintenance burden of repetitive, manual code.
 
-To illustrate the simplification provided by Mapster, consider the following comparison. Manually mapping properties from a list of domain objects to a list of DTOs would typically involve iterating through the list and assigning each property individually, as shown in Listing \ref{lst:mapster}.
+As demonstrated in our implementation, the transformation of domain entities into response models—such as the \texttt{CompanyOutputModel}—is performed concisely throughout all API controllers:
 
-\begin{lstlisting}[caption={Mapping without Mapster}, label={lst:mapster}]
-  var domainObjects = await _service.GetAllItems(limit, offset);
-  var dtoList = new List<ItemDto>();
-  foreach (var domainObject in domainObjects)
-  {
-      dtoList.Add(new ItemDto
-      {
-          Id = domainObject.Id,
-          Name = domainObject.Name,
-          // ... map other properties manually
-      });
-  }
-  return Ok(new { items = dtoList });
-  \end{lstlisting}
-  
+\begin{lstlisting}[caption={Concise domain-to-DTO transformation}, label={lst:mapster-controller}]
+// Mapping a single entity to a response model
+return res.Match(
+success => Ok(success.Adapt(<CompanyOutputModel>)),
+error => error switch { /* ... */ }
+);
 
-This manual approach becomes verbose and error-prone as the number of properties and types increases. With Mapster, the same transformation can be achieved concisely:
+// Mapping a collection of items during search
+Items = success.Items.Adapt<List>(),
+\end{lstlisting}
 
-\begin{lstlisting}[caption={Mapping with Mapster}, label={lst:mapster-adapt}]
-  var domainObjects = await _service.GetAllItems(limit, offset);
-  return Ok(new { items = domainObjects.Adapt<List<ItemDto>>() });
-  \end{lstlisting}
-  
-
-Mapster's `Adapt` method handles the mapping automatically based on convention or configured rules, significantly reducing the amount of code required and improving readability.
-/*
-\subsection{Quartz.NET}
-Quartz.Net is an open-source job scheduling library for .NET applications. It allows tasks to run automatically at specified times or intervals \cite{quartznet}.
-
-We used Quartz.NET in our application to address the following critical issues:
-\begin{itemize}
-  \item The automatic renewal of user-defined spending limits.
-  \item To automatically process recurring transactions that users have configured in the system.
-\end{itemize}
-
-Our system allows users to establish \textbf{monthly} or \textbf{weekly} spending limits on their wallets, requiring a mechanism to reset these limits at regular intervals without manual intervention.
-
-We implemented a scheduled job to run at 00h01 every Sunday for the renewal of weekly limits because the weekly limits are based on calendar weeks, and a monthly job to run at 00h01 on the first day of every month for the renewal of monthly limits. See more details on the schedulers implementation in Section \ref{sec:schedulers}.
-
-This was achieved using CRON scheduling expressions present on \cite{cronSchedule} and \cite{cronSchedule2}, and a function present on the database that will verify if the limit has expired and if so, it will be renewed.
-
-The decision to implement scheduling logic in the API layer using Quartz.NET, rather than PostgreSQL's native scheduling capabilities, was driven by practical considerations. Centralizing scheduling logic within the application enhances maintainability, as all scheduling rules remain in one place, making them easier to modify and debug.
-
-Additionally, this approach keeps business logic within the application layer, ensuring consistency and reducing dependencies on database-specific features. This makes the system more adaptable to future changes and easier to maintain.
-*/
+This pattern is consistently applied across every controller in our API, ensuring that our responses remain clean, consistent, and strictly decoupled from the internal domain model structure. While we occasionally use manual LINQ projections for highly specialized data requirements, Mapster serves as our standard approach for the vast majority of data transformations, significantly improving our codebase's maintainability.</List
 
 \subsection{MailKit}
 MailKit is an open-source cross-platform .NET library for SMTP, POP3, and IMAP. It provides a simple way to handle email functionality within .NET applications \cite{mailkit}.
@@ -92,7 +58,7 @@ MailKit is an open-source cross-platform .NET library for SMTP, POP3, and IMAP. 
 In our Digital Wallet application, MailKit is important for enhancing security and user verification when a user tries to register on the app it will send a confirmation email to the user's email address. The implementation leverages MailKit's SmtpClient to connect to our email account, authenticate, and send the confirmation code to the user's email address.
 
 This automated email verification system is essential for maintaining the security of our application, preventing fraudulent accounts, and ensuring that all users have valid contact information in the system.
-/* ??
+
 \subsection{XUnit}
 
 XUnit is a widely used testing framework for .NET applications\cite{xunit} providing simplicity and extensibility. Unlike older testing frameworks, XUnit uses attributes instead of base classes, enabling more flexible test organization and execution.

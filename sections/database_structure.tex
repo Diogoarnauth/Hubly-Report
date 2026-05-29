@@ -29,113 +29,66 @@
     \label{fig:database_tables}
 \end{figure}
 
-The relational model was designed to support the functional and structural needs of a marketplace platform. Each entity and its attributes were carefully selected to reflect real-world concepts such as users, wallets, transactions, goals, and access control. Below is an intuitive justification for the key design decisions:
+The relational model was designed to support the functional and structural needs of a marketplace platform. Each entity and its attributes were carefully selected to reflect real-world concepts such as users, creators, creators social profiles, companies, etc. Below is an intuitive justification for the key design decisions:
 \begin{itemize}
-    \item \textbf{USER}: Represents individual users of the platform. Attributes like email, username, and password\_hash are essential for authentication. The flags is\_email\_confirmed and timestamps help with account lifecycle management.
+    \item \textbf{USER}: Represents individual users of the platform. Attributes like id, name, email,  password\_validation, a flag is\_email\_confirmed, and a timestamp created\_at. This structure supports user authentication, account management, and email verification processes.
 
-    \item \textbf{WALLET}: A wallet groups financial data and can be shared among multiple users. It includes balance, currency, and optional description, supporting both individual and group financial tracking.
-
-    \item \textbf{USER\_WALLET}: Models a many-to-many relationship between users and wallets, with an is\_owner flag to distinguish between owners and invited participants.
-
-    \item \textbf{INVITE}: Captures the invitation flow when users are invited to join wallets. The status and joined\_at fields allow tracking of invitation state over time.
+    \item \textbf{Social Platforms}: A table to store information about different social media platforms. It works as a source of truth for social media integration. Here are only the social networks we currently support, but it can be easily extended in the future if we want to add more.
 
     \item \textbf{TOKEN}: Stores session or login tokens for users. Includes created\_at and last\_used\_at to support expiration and activity tracking, promoting secure authentication.
 
-    \item \textbf{EMAIL\_CONFIRMATION}: Used during account creation, storing a unique code, its expiration, and usage status for email verification workflows.
+    \item \textbf{CREATOR}: Represents content creators on the platform. It includes a foreign key (that for business logic was chosen to be the PK as well) to the USER table, linking each creator to a user account. Here we also store the creator's name, description, and profile picture URL (In the future), is is\_verified flag to indicate if the creator has been verified by the platform, availability\_status, a global\_rating (as a source of reputation), and other statistics for interaction management.
 
-    \item \textbf{ICON} and \textbf{CATEGORY}: Categories help classify transactions (e.g., Groceries, Rent). Each category may be linked to an icon for UI clarity, and the is\_default flag identifies system-defined options. Color and icon references support user personalization.
+    \item \textbf{COMPANY}: Represents companies and business entities on the platform. Similarly to the CREATOR entity, it utilizes a foreign key to the USER table as its primary key (PK) to maintain a one-to-one relationship with the user account, ensuring data integrity via a cascade delete policy. This table stores essential business information, including the \texttt{company\_name}, an \texttt{is\_verified} status flag, a \texttt{description}, the \texttt{company\_size}, the \texttt{website\_link}, and the \texttt{country\_headquarters}, providing a comprehensive profile for companies seeking marketing partnerships.
 
-    \item \textbf{WALLET\_CATEGORY}: Allows each wallet to customize which categories are available, ensuring separation between shared and personal classification systems.
+    \item \textbf{Sectors}: A table to store information about different market sectors. It works as a source of truth for companies and creators sectors. Here are only the market sectors we currently support, but it can be easily extended in the future if we want to add more.
 
-    \item \textbf{TRANSACTION}: Central to the platform, each transaction records amount, type (e.g., income, expense, save), associated wallet, user, category, and optionally links to a saving goal or recurrence rule.
+    \item \textbf{COMPANY\_SECTORS}: Acts as an associative table to implement a many-to-many relationship between the \texttt{COMPANY} and \texttt{SECTOR} entities. By using a composite primary key consisting of \texttt{company\_user\_id} and \texttt{sector\_id}, it enables companies to be associated with multiple business sectors, facilitating granular filtering and discovery within the marketplace.
 
-    \item \textbf{SAVING\_GOALS}: Lets users define goals like \emph{Vacation Fund} with a target\_amount, balance, deadline, and status. Tied to a wallet to allow shared or personal goals.
+    \item \textbf{CREATOR\_SOCIAL\_PROFILES}: Stores detailed information regarding a creator's presence on specific social media platforms. Each record links to a \texttt{CREATOR} via \texttt{creator\_id} and specifies the platform through \texttt{platform\_id}. It captures essential metrics and metadata, such as \texttt{platform\_user\_name}, a \texttt{link}, \texttt{description}, \texttt{followers\_count}, and pricing ranges (\texttt{price\_min} and \texttt{price\_max}). A unique constraint on \texttt{(platform\_id, platform\_user\_name)} ensures data integrity and prevents duplicate social media accounts.
 
-    \item \textbf{RECURRENCE}: Abstracts recurring transaction logic with fields such as recurring\_period, next\_occurrence\_date, and ocurrences\_count. Linked to TRANSACTION when applicable.
+    \item \textbf{CREATOR\_PROFILE\_SECTORS}: Functions as a junction table that links individual social media profiles to specific sectors. This design allows for a multi-faceted categorization of a creator's professional niche across different platforms. By associating a \texttt{profile\_id} with a \texttt{sector\_id}, the platform can effectively index creators based on the specific content domain of each individual social channel.
 
-    \item \textbf{LIMIT}: Enables setting monthly or weekly spending limits per wallet (and optionally per category). It tracks the current\_amount spent and the limit\_amount, helping users stay on budget.
+    \item \textbf{EMAIL\_CONFIRMATION}: Manages the lifecycle of email verification tokens required for user account activation. This table stores the \texttt{confirmation\_code} associated with a specific \texttt{user\_id}, along with temporal constraints defined by \texttt{created\_at} and \texttt{expires\_at} (stored as \texttt{bigint} timestamps). The \texttt{used} boolean flag tracks whether a code has already been consumed. The foreign key relationship with the \texttt{USER} table ensures that verification records are automatically removed via a cascade delete policy if the corresponding user account is deleted, maintaining database consistency.
+
+    \item \textbf{PROFILE\_VIEWS\_HISTORY}: Records the interaction history of users visiting other profiles. This table utilizes a \texttt{CHECK} constraint (\texttt{chk\_only\_one\_viewed}) to ensure that each entry refers exclusively to either a company profile or a creator social profile, maintaining a strict data normalization strategy. It captures the \texttt{viewer\_user\_id}, the specific target entity, and the timestamp (\texttt{viewed\_at}), providing the foundation for analytical insights into profile engagement and reach.
+
+    \item \textbf{CREATOR\_RATINGS}: Manages the peer-based reputation system by storing numerical evaluations of content creators. Each record consists of an \texttt{evaluator\_id}, a \texttt{target\_creator\_id}, and a \texttt{rating\_value} (constrained to a scale of 1 to 5). The table enforces business rules through two primary constraints: \texttt{unique\_user\_rating}, which prevents multiple ratings from the same user for a single creator, and \texttt{chk\_not\_self\_rating}, which logically prohibits users from rating their own profiles.
+
+    \item \textbf{CONVERSATIONS}: Serves as the central entity for all communication private chats. It stores metadata such as \texttt{created\_at} and \texttt{last\_message\_at}, allowing for efficient sorting and retrieval of active conversations in the messaging UI.
+
+    \item \textbf{CONVERSATION\_PARTICIPANTS}: Maps the users involved in each conversation. It utilizes a \texttt{CHECK} constraint (\texttt{chk\_participant\_role}) to enforce that a participant acts either as a company representative or a creator social profile, effectively decoupling the user's base identity from their active role in the partnership negotiation.
+
+    \item \textbf{MESSAGES}: Stores the actual content of communications. It supports message lifecycle tracking through boolean flags \texttt{is\_edited} and \texttt{is\_deleted}, ensuring auditability while maintaining a clean chat history. Messages are linked to a specific \texttt{conversation\_id} and identified by a \texttt{sender\_id}.
+
+    \item \textbf{MESSAGE\_READ\_STATUS}: Manages individual delivery receipts and read state. By mapping each \texttt{user\_id} to the \texttt{last\_read\_message\_id} within a specific conversation, it enables granular tracking of message progression, ensuring that participants can identify which communications are still pending review.
+
+    \item \textbf{CONVERSATION\_TAGS}: Allows users to create custom categorization labels for their communication chats. Each tag is owned by a specific \texttt{user\_id} and defined by a name and a \texttt{color\_hex}, enabling a personalized CRM experience. The \texttt{unique\_user\_tag\_name} constraint ensures that users do not define duplicate tags within their own workspace.
+
+    \item \textbf{CONVERSATION\_TAG\_ASSIGNMENTS}: Implements the association between a conversation and the tags assigned by a specific user. The composite primary key ensures that each conversation-tag assignment is unique per user, while \texttt{updated\_at} provides the necessary audit trail for tag modifications within the CRM workflow.
+
 \end{itemize}
 
-\section{Triggers and Functions}
-To help us have less code and unnecessary logic on the API we decided to make some automatic actions on the database using triggers and functions. This helped us to have a more efficient and cleaner code, and also not have to worry about specific logic.
+\section{Database Functions and Recommendation Engine}
+To ensure the high performance of our platform and minimize data transfer latency, we implemented a custom recommendation engine directly within the database layer. By offloading complex scoring algorithms to PostgreSQL, we ensure that ranking calculations are performed at the data source, returning only the most relevant, pre-scored entities. This approach leverages the engine's ability to process large datasets efficiently, moving away from traditional, resource-heavy API-side filtering.
 
-\subsection{Trigger for updating the limit amount when transaction is created}
-This trigger is responsible for automatically updating spending limits when a new transaction is recorded in the system. Our application allows users to create spending limits that establish boundaries on the amount of money they can spend, either within specific categories or across all categories (total limit).
-
-When a transaction is created, the trigger performs the following actions:
+\subsection{Company Recommendation Algorithm}
+The \texttt{get\_recommended\_companies} function implements a weighted multi-factor scoring algorithm to match companies with potential partners. It receives a user's interest profile as a \texttt{JSONB} object, allowing for dynamic, schema-less input. The \texttt{recommendation\_score} is derived from an additive model that applies specific weights to three distinct dimensions:
 \begin{itemize}
-    \item Checks if there exists any limit associated with the transaction's category and/or a total spending limit.
-    \item If a limit exists, verifies whether it has expired. If expired, the trigger marks that limit as inactive and creates a new one. This verification serves as a failsafe, though it should rarely be needed since scheduled tasks regularly check for and handle expired limits.
-    \item Updates the current accumulated amount of the relevant limits to reflect the new transaction.
+\item \textbf{Sector Affinity (Weight 10x)}: Analyzes sector alignment between user interests and company expertise.
+\item \textbf{Geographic Alignment (Weight 5x)}: Prioritizes companies based on the user's preferred country headquarters.
+\item \textbf{Scale Compatibility (Weight 2x)}: Adjusts relevance based on the size of the business entity.
 \end{itemize}
+By multiplying these inputs by predefined coefficients, the algorithm produces a prioritized ranking. Furthermore, it ensures a "fresh feed" by dynamically excluding previously viewed entities via a cross-reference with the \texttt{profile\_views\_history} table.
 
-For example, if a user has set a monthly limit of \$500 for \emph{Food} category and makes a new purchase of \$50 in that category, the trigger automatically increases the current accumulated amount for that limit from, say, \$200 to \$250, ensuring the user can always see how much of their limit they've used.
-
-\sloppy
-Figure~\ref{fig:create_limit_trigger} illustrates this process, showing how the trigger affects the spending limits when a new expense transaction is created. The diagram shows the state of the category limit and total limit before and after the transaction is recorded in the system.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=8cm]{img/trigger_on_transaction_create.png}
-    \caption{Process of updating limits when a new expense transaction is created.}
-    \label{fig:create_limit_trigger}
-\end{figure}
-
-\subsection{Trigger for updating the limit amount when transaction is updated}
-This trigger manages the recalculation of spending limits when an existing transaction is modified. It uses a straightforward approach to ensure limits remain accurate regardless of what aspects of the transaction were changed.
-
-When a transaction is updated, the trigger executes this process:
+\subsection{Creator Social Profile Recommendation Algorithm}
+The \texttt{get\_recommended\_social\_profiles} function employs a sophisticated, multi-dimensional analysis to rank content creators. Unlike standard filtering, this algorithm computes a \texttt{recommendation\_score} using a nuanced scoring logic:
 \begin{itemize}
-    \item First, if the original transaction was an expense, it completely removes the transaction's impact from both the total limit and the category-specific limit.
-    \item Then, if the updated transaction is still an expense, it adds the new transaction value to both the total limit and the new category's limit.
+\item \textbf{Domain Expertise}: High-weight aggregation of matches across creator sectors (\texttt{Weight 100x}).
+\item \textbf{Platform Preference}: Boosts results based on the user's specific social channel focus (\texttt{Weight 10x}).
+\item \textbf{Operational Readiness}: Direct integration of real-time \texttt{availability\_status}, providing a binary boost for active creators.
+\item \textbf{Reputation Metrics}: Incorporates the creator's \texttt{global\_rating}, ensuring quality-first results.
+\item \textbf{Dynamic Budget Optimization}: A conditional pricing logic that validates the creator's \texttt{price\_min} against the user’s \texttt{avg\_price} budget, providing a 20\% tolerance margin to balance affordability with value.
 \end{itemize}
 
-This two-step approach effectively treats the update as a deletion of the old transaction followed by an insertion of the new one. It handles all possible modification scenarios including:
-\begin{itemize}
-    \item Changes to the transaction amount
-    \item Changes to the transaction category
-    \item Changes to the transaction type (from expense to income or vice versa)
-    \item Any combination of the above changes
-\end{itemize}
-
-For example, if a user changes a \$75 \emph{Entertainment} expense to a \$100 \emph{Dining} expense, the trigger first subtracts \$75 from the \emph{Entertainment} limit and the total limit, then adds \$100 to the \emph{Dining} limit and the total limit.
-
-Figure~\ref{fig:update_limit_trigger} illustrates this update process, showing how the trigger manages changes to limits when a transaction is modified. The diagram demonstrates the complete flow of the operation, from the initial state to the final state, including all intermediate steps of removing and adding values.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=8cm]{img/trigger_on_transaction_update.png}
-    \caption{Process of updating limits when a transaction is edited to other category with a diferent amount}
-    \label{fig:update_limit_trigger}
-\end{figure}
-
-
-\subsection{Trigger for updating the limit amount when transaction is deleted}
-This trigger manages the adjustment of spending limits when a transaction is removed from the system. Deleting transactions requires recalculating the associated spending limits to maintain accurate budget tracking.
-
-When a transaction is deleted, the trigger performs these operations:
-\begin{itemize}
-    \sloppy
-    \item Identifies which spending limits are affected by the deleted transaction (category-specific and/or total limits).
-    \item Verifies that these limits are still active and not expired.
-    \item Decreases the accumulated amount of each affected limit by the transaction amount, effectively \emph{giving back} the spent amount to the user's available budget.
-    \item Ensures that the limit's current amount doesn't fall below zero after the adjustment.
-\end{itemize}
-
-For instance, if a user mistakenly recorded a \$120 grocery purchase and later deletes it, the trigger automatically reduces the accumulated amount in their \emph{Groceries} limit by \$120. If their limit was previously at \$350 out of \$500, it would now show \$230, correctly reflecting that they have more available budget than previously indicated.
-
-Figure~\ref{fig:delete_limit_trigger} illustrates this process, showing how the trigger adjusts the spending limits when a transaction is deleted. The diagram demonstrates how the removal of a transaction leads to the corresponding reduction in the accumulated amounts for both the category-specific limit and the total spending limit.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=9cm]{img/trigger_on_transaction_delete.png}
-    \caption{Process of updating limits when a transaction is deleted}
-    \label{fig:delete_limit_trigger}
-\end{figure}
-
-\subsection{Trigger for adding default categories to a new wallet}
-This trigger simplifies the wallet setup process by automatically associating newly created wallets with a predefined set of categories. This ensures users can immediately begin tracking their expenses without having to manually configure categories.
-
-For example, when a user creates a new wallet, it will automatically be configured with the default categories like \emph{Food}, \emph{Transportation}, \emph{Housing}, \emph{Entertainment}, and \emph{Utilities}. This means the user can immediately begin categorizing their transactions without any additional setup.
-
-This automatic initialization improves the user experience by reducing the initial configuration required and ensuring consistency across wallet setups. Users can still customize their categories later by adding new ones that make more sense for their specific needs.
+This approach transforms the recommendation feed from a static list into a high-utility discovery tool. By processing these weights directly in SQL, we achieve sub-millisecond ranking performance, even when evaluating diverse criteria across thousands of social profiles.

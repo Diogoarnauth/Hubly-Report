@@ -1,13 +1,8 @@
 \section{Frontend Technologies}
-In this section we will explain the technologies used and why we chose them in the frontend of the project.
-
-\subsection{Shadcn/UI}
-Shadcn/UI is an open-source library of pre-built components based on Radix UI and Tailwind CSS. To use them we just need to add the components to the project and use them in the code. 
-Tailwind CSS is a CSS framework that allows us to style the components with a single line of code, making the development process faster and more efficient.
-In our webproject we used the components to agilize the development process and to have a more consistent design throughout the app. Most of the components are already the way we wanted them to be, but we can and did customize some of them to fit our needs using Tailwind CSS and changing the default styles.
+In this section we will explain the technologies used and why we chose them in the frontend of the project.Mapsterradiz
 
 \subsection{React}
-React is a JavaScript library for building user interfaces. Helps us create reusable components and manage the state of the app, while keeping the code clean and easy to understand.
+React is a JavaScript library\cite{react} for building user interfaces. Helps us create reusable components and manage the state of the app, while keeping the code clean and easy to understand.
 It uses a Virtual DOM which is a lightweight representation of the DOM. When the state of the app changes, React updates the Virtual DOM and compares it to the previous Virtual DOM to determine the changes needed to the actual DOM. This is more efficient than updating the DOM directly.
 
 In our project we used React to build the frontend of the webapp, from the pages layouts to the components. React allows us to update the UI allongside the data, making the app more fluid and responsive. One of the usecases of React is the use of hooks, which are functions that allow us to manage the state of the app like \texttt{useState}, \texttt{useEffect}, etc. This is very useful when we need to manage the state of the app, like in the case of the form validation.
@@ -15,11 +10,9 @@ In our project we used React to build the frontend of the webapp, from the pages
 Additionally, React provides access to a lot of third party libraries that can help us with the development of the app.
 
 \subsection{Next.js}
-Next.js is an open-source React framework developed by Vercel. It is a React framework that provides a set of features like server-side rendering, static site generation, and routing. Next.js is known for its performance and simplifing routing.
+Next.js is a React-based framework\cite{nextjs} that enables server-side rendering (SSR) and static site generation (SSG) for web applications. Developed by Vercel, it provides a comprehensive development environment that enhances performance and search engine optimization (SEO).
 
-In our project we chose Next.js as the framework for the frontend because it provides a lot of features that are useful for the development of the app and the use of React. The built-in routing system allowed us to create pages only by adding a new file in the \texttt{app} folder, with no need to configure the routes in a different file.
-
-Overall, Next.js is a powerful framework that provides a lot of features that are useful for the development of the app and the use of React.
+In our project, Next.js was chosen to build the frontend, providing a robust structure for routing and data fetching. It allowed us to deliver a fast and responsive user experience by pre-rendering pages on the server, significantly reducing the initial load time and improving overall application performance compared to standard client-side rendered applications.
 
 \subsection{React Native}
 React Native is a open-source framework, developed by Meta Platforms, used to build mobile applications, to both Android and iOS, using React, as well as web and desktop applications.
@@ -27,22 +20,42 @@ It allows us to create native mobile applications using the same principles and 
 
 In our project we used React Native to build the mobile app, allowing to make the app available to both Android and iOS audience.
 
-\subsection{Expo}
-Expo is an open-source platform built on top of React Native that simplifies the development process of mobile applications. It provides a set of tools and services that streamline the development, testing, and deployment of React Native apps.
-Expo includes a development environment, a set of pre-built components, and a build service that allows us to create and publish mobile applications without the need for complex native configurations.
 
-We took advantage of Expo’s managed workflow, using modules such as expo-status-bar, expo-linear-gradient, and expo-constants to simplify access to native features without manual native configuration. 
-Additionally, Expo Router was used to handle navigation, and the build service allowed us to generate production-ready builds for both Android and iOS platforms efficiently.
+\subsection{UI and Styling: The Shadcn/UI Ecosystem}
+Our interface design relies on the Shadcn/UI ecosystem, which provides a set of pre-built, accessible components. These components are architecturally based on two core technologies:
+
+\subsection{Radix UI}
+Radix UI is a collection of unstyled\cite{radixui}, accessible component primitives for building high-quality web interfaces. Unlike typical UI frameworks, Radix focuses on providing the functional core—such as state management and accessibility (WAI-ARIA compliance)—while leaving the styling to the developer.
+
+In our project, we leveraged Radix UI to build complex interactive components like dialogs, dropdowns, and tabs. This allowed us to ensure our application remained fully accessible to all users while maintaining complete control over the design, as we were not restricted by predefined, rigid component styles.
+
+\subsection{Tailwind CSS}
+Tailwind CSS is a utility-first CSS framework\cite{tailwindcss} that provides low-level utility classes to build custom designs directly in the markup. It streamlines the styling process by allowing developers to compose designs without leaving the HTML/JSX structure.
+
+For Hubly, Tailwind CSS was our primary styling tool. It enabled rapid development and consistent design across the platform. By using its predefined design tokens and responsive modifiers, we were able to create a cohesive visual language with minimal CSS overhead, resulting in a cleaner and more maintainable codebase.
+
+
+\subsection{Lucide React}
+Lucide React is a lightweight, open-source library\cite{lucidereact} that provides a consistent set of SVG icons for React applications. It is designed to be highly customizable, allowing icons to be styled using standard CSS properties.
+
+In our implementation, Lucide React provided a clean and modern icon set that enhanced the visual interface of our platform. Its seamless integration with React allowed us to use icons as simple components, ensuring that our UI was both intuitive and aesthetically consistent across different sections of the application.
+
+\subsection{TanStack React Query}
+TanStack React Query is a powerful library\cite{reactquery} for fetching, caching, and synchronizing asynchronous server state in React applications. It eliminates the need for complex manual data management and provides built-in tools for loading, caching, and error handling.
+
+We utilized React Query as our primary data management layer to replace local storage synchronization for server-side data. It enabled us to perform efficient data fetching and automatic background updates, ensuring that the application always displayed the most up-to-date information while significantly reducing unnecessary API calls and improving perceived performance.
+
+\subsection{SignalR}
+SignalR is a Microsoft library\cite{signalr} that simplifies the process of adding real-time web functionality to applications. It allows the server to push content to connected clients instantly, rather than waiting for the client to request new data.
+
+In our application, we integrated the SignalR client to enable bidirectional, real-time communication between our backend and frontend. This was crucial for features requiring instant updates, such as notifications or live data tracking, ensuring a highly interactive experience without the need for periodic polling.
+
+\subsection{js-cookie}
+js-cookie is a lightweight JavaScript library\cite{jscookie} used for handling browser cookies. It provides a simple API for reading, writing, and removing cookies, abstracting the complexities of the native browser document.cookie API.
+
+Within our project, we used js-cookie to manage user authentication state and temporary configuration settings stored on the client side. Its simplicity allowed us to handle session tokens and user preferences reliably across different browser sessions, ensuring a smooth and persistent experience for our users.
 
 \subsection{TypeScript}
-TypeScript is a statically typed programming language that is a superset of JavaScript. It is a popular language developed by Microsoft for building large-scale applications, and it adds optional static types, classes and interfaces to JavaScript.
+TypeScript is a statically typed programming language\cite{typescript} that acts as a superset of JavaScript, developed by Microsoft. It adds optional static types, interfaces, and classes to the language, which are then compiled into plain JavaScript.
 
-By adding types to the code it allows us to catch errors early instead of at runtime, making the development process more efficient and the code more robust.
-
-In our project we used TypeScript in the frontend to improve the development experience with a less runtime errors and a better code organization. The fact that has integration with React and Next.js is a plus, as well as the fact that it is a very popular language in the industry. 
-
-Overall, TypeScript is a powerful language that can help us have more clarity in the code, catch errors early and make the development process more efficient.
-
-\subsection{Jest}
-Jest is a JavaScript testing framework developed and maintained by Facebook (Meta), with a focus on simplicity and ease of use. This framework provides integrated features such as mocking, code coverage, and snapshot testing, eliminating the need for complex configurations.
-In our project, we used Jest to perform unit tests on the components of both web and mobile applications. These tests allow us to verify that components behave as expected, both individually and when integrated together, facilitating early error detection and code maintenance.
+By enforcing strict typing, TypeScript allowed us to detect potential errors during the development phase rather than at runtime. In our project, this ensured that data structures were consistent across the application, significantly improving code quality, readability, and the overall reliability of our frontend logic.
