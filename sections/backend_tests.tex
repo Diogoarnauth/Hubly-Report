@@ -1,83 +1,46 @@
-\section{Backend Tests}
-We adopted a layered testing approach to ensure high confidence in our system’s behavior. With over 200 tests written, our goal was to validate that every function in the application performs exactly as intended — both in isolation and when integrated with other components. This rigorous test coverage helps us identify regressions early, improve maintainability, and confidently refactor code.
+\section{Backend Tests} \label{sec:backend_tests}
+We adopted a layered testing approach to ensure high confidence in our system’s behavior. With some tests written across the solution, our goal was to validate that every function in the application performs exactly as intended — both in isolation and when integrated with other core sub-systems. This rigorous test coverage helps us identify regressions early, improve maintainability, and confidently refactor our codebase during agile iterations.
 
 \subsubsection{Unit Tests}
-For business logic in the Service Layer, we wrote extensive unit tests using Moq to mock all external dependencies, such as repositories and configuration settings. These tests validate:
+For the domain logic residing in our Service Layer, we wrote extensive unit tests using Moq to isolate external system behaviors, such as database repositories and cross-cutting infrastructure concerns. These tests validate:
 
 \begin{itemize}
-    \item Business rules (e.g., category name length)
-    \item Behavior under edge cases (e.g., icon not found, user not in wallet)
-    \item Correct handling of internal operations (e.g., transactions)
+    \item Strict domain validation rules (e.g., preventing empty, white-spaced, or overly long conversation tag names).
+    \item Behavior under diverse edge cases (e.g., attempting to tag a conversation where the user is not an active participant, or manipulating tags that belong to other identities).
+    \item Error routing integrity using explicit strongly-typed results via the \texttt{OneOf} library pattern.
 \end{itemize}
 
-We structured these using the XUnit \texttt{IClassFixture<T>} interface and created a reusable Fixture class per service, for example:
-\begin{lstlisting}[caption={CategoryServiceFixture}, label={lst:category-service-fixture}]
-public class CategoryServiceTests : IClassFixture<CategoryServiceFixture>
+To keep our test suites maintainable, clean, and fast, we structured them using XUnit's \texttt{IClassFixture<T>} interface. We established a reusable fixture class for each core service lifecycle, such as the \texttt{ConversationTagServiceFixture}.
+
+\begin{lstlisting}[caption={ConversationTagServiceFixture instantiation}, label={lst:conversation-tag-fixture-init}]
+public class ConversationTagServiceTests : IClassFixture<ConversationTagServiceFixture>
 \end{lstlisting}
 
-This allows us to:
+Implementing centralized class fixtures yields significant advantages:
 \begin{itemize}
-    \item Set up reusable mocks for dependencies (ICategoryRepository, IWalletRepository, etc.)
-    \item Provide consistent test data (TestCategory, TestIcon)
-    \item Easily toggle between different states (e.g., user has/hasn't access, category is default)
+    \item \textbf{Decoupled Mock Orchestration:} Pre-configures interconnected dependency graphs, mock states, and multi-repository contexts (such as \texttt{IConversationTagRepository}, \texttt{IUserRepository}, and \texttt{IConversationRepository}) within a centralized setup constructor.
+    \item \textbf{Transactional Context Management:} Simulates nested transactional boundaries through specialized manager wrappers (\texttt{ITransactionManager}), mirroring real production database behaviors.
+    \item \textbf{State Fluidity Utilities:} Exposes intuitive helper states (e.g., \texttt{SetupTagNameExists(bool)}, \texttt{SetupUserIsParticipant(bool)}) that let individual test cases manipulate mock flows cleanly using declarative state shifts.
 \end{itemize}
 
-\begin{lstlisting}[caption={CategoryServiceTests}, label={lst:category-service-tests}]
+\begin{lstlisting}[caption={Unit test execution inside ConversationTagServiceTests}, label={lst:conversation-tag-unit-tests}]
 [Fact]
-public async Task GetAllCategories_ShouldReturnCategories_WhenUserHasAccess()
+public async Task CreateTag_ShouldReturnError_WhenTagNameAlreadyExists()
 {
-    var result = await _fixture.CategoryService.GetAllCategories(
-        _fixture.UserId,
-        _fixture.WalletId,
-        10,
-        0
-    );
+    // Arrange
+    _fixture.SetupUserExists(true);
+    _fixture.SetupTagNameExists(true);
+    _fixture.SetupCreateTag(10);
 
-    Assert.True(result.IsT0); // Ensure we got a list of categories
-    Assert.NotEmpty(result.AsT0); // There should be at least one
+    // Act
+    var result = await _fixture.ConversationTagService.CreateTag(_fixture.UserId, "Duplicada", "#FFFFFF");
 
-    _fixture.WalletRepository.Verify(x =>
-        x.UserIsPartOfWallet(_fixture.WalletId, _fixture.UserId), Times.Once);
+    // Assert
+    Assert.True(result.IsT1); // Validates that a failure union state was reached
+    Assert.IsType<ConversationTagError.TagNameAlreadyExists>(result.AsT1);
 }
 \end{lstlisting}
 
+As illustrated in Listing~\ref{lst:conversation-tag-unit-tests}, our test execution relies on declarative setup triggers. By feeding a pre-existing tag scenario into the mock layers, the service execution triggers a failure branches inside the domain validation. Instead of throwing raw exceptions, the application uses discriminated unions (\texttt{OneOf}) to output functional result branches. 
 
-\subsubsection{Integration Tests}
-To validate the correctness of our data access layer—particularly Entity Framework queries—we implemented a suite of integration tests targeting the repository layer. These tests interact with a real PostgreSQL database instance to ensure:
-
-\begin{itemize}
-\item Queries return accurate and expected results
-\item Entity mappings between \texttt{C\#} classes and database tables are correctly configured
-\item Transactional operations behave as intended, including commit and rollback scenarios
-\end{itemize}
-
-We leveraged \texttt{Testcontainers}, a .NET library that enables programmatic management of lightweight Docker containers, to create a fully isolated and disposable test environment. This approach offers several key benefits:
-
-\begin{itemize}
-\item Automatic provisioning of a dedicated PostgreSQL container per test class
-\item Clean and predictable database state through controlled data seeding
-\item Complete isolation from development and production databases
-\end{itemize}
-
-The following snippet demonstrates how integration tests are structured using Testcontainers:
-
-\begin{lstlisting}[caption={Integration Test Using Testcontainers}, label={lst:integration-test}]
-public class CategoryRepositoryTests : IClassFixture<CategoryContainerFixture>
-{
-[Fact]
-[Trait("Category", "Integration")]
-public async Task GetAllCategories_ShouldReturnCategories_WhenWalletHasCategories()
-{
-    await _fixture.ExecuteInTransactionAsync(async () =>
-    {
-        var categories = await _categoryRepository.GetAllCategories(1, 10, 0);
-
-        Assert.NotNull(categories);
-        Assert.NotEmpty(categories);
-        Assert.All(categories, c => Assert.NotNull(c.Icon));
-    });
-}
-}
-\end{lstlisting}
-
-This setup ensures that each test executes against a real, fully isolated PostgreSQL instance with seeded test data, offering confidence in the correctness of the data access layer under real-world conditions.
+The test structure easily intercepts this by asserting that the response is mapped to the failure index state (\texttt{IsT1}) and confirms the dynamic payload matches the specific architectural error class (\texttt{ConversationTagError.TagNameAlreadyExists}).

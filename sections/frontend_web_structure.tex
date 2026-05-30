@@ -1,174 +1,210 @@
 \section{Frontend Structure}
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.05\textwidth]{img/frontend_structure.png}
-    \caption{Frontend Structure}
+    \caption{Frontend Architecture Overview}
     \label{fig:web-frontend-structure}
 \end{figure}
 
-The frontend structure is organized into three main directories:
+To maintain a clean separation of concerns and ensure scalability, the frontend architecture is divided into three primary directories:
+
 \begin{itemize}
-    \item \textbf{app:} This directory contains the main application logic, routing, and top-level components that orchestrate the application flow.
-    \item \textbf{components:} This directory is dedicated to reusable UI elements and some specific components that are used in the application.
-    \item \textbf{services:} This directory handles business logic, data fetching, interactions with the backend API, and other functionalities that need to be shared or separated from the UI components.
+    \item \textbf{app:} This directory serves as the structural foundation of the platform, utilizing the Next.js App Router for file-system-based routing. Rather than handling imperative user navigation, it defines the URL endpoints of the application. The files within this directory act as lightweight entry points that extract URL parameters, define route-specific layouts, wrap pages with necessary Context Providers (such as injecting a \texttt{SignalRProvider} for chat routes), and delegate the actual UI rendering and complex logic to dedicated components.
+    \item \textbf{components:} This folder acts as a repository for modular, reusable User Interface (UI) elements. It isolates the visual building blocks from the core routing logic.
+    \item \textbf{services:} Centralizes all external communications. This directory handles API requests, data fetching, and core business logic, ensuring that UI components remain lightweight and focused solely on rendering data.
 \end{itemize}
 
+\section{Components Architecture}
+Components form the structural foundation of our frontend. By designing them to be highly decoupled from specific pages, we ensure maximum reusability and maintainability across the entire application.
 
-\section{Components}
-The components are the main building blocks of the frontend. They are used to create the UI of the application, they are not associated with a specific page which means they are reusable.
+We adopted a modular approach for the \texttt{components} folder to improve code maintainability. General-purpose elements that appear across multiple views—such as buttons and form inputs—are centralized in the \texttt{ui} subdirectory. Utilizing the \texttt{shadcn/ui} library for these shared components allowed us to enforce a standardized and cohesive user interface.
 
-They are organized in the \texttt{components} directory, when one is used in multiple pages it is placed in the \texttt{ui} directory, these ui components are mainly imported from shadcn/ui. The components are organized by the page they are used in, for example the \texttt{dashboard} directory contains components used in the dashboard page like the \texttt{walletOverview} and \texttt{expenseChartItem} components.
+Conversely, components that are tailored to a specific feature are grouped into dedicated, context-specific folders. For instance, the \texttt{chat} and \texttt{search} directories house specialized components such as \texttt{ChatDashboard} and \texttt{CreatorSearch}, ensuring that domain-specific logic remains neatly compartmentalized and easy to locate.
+\section{Global State and Contexts} \label{sec:contexts_web}
 
+In our application, certain data must be instantly accessible across almost every view. The most critical piece of global information is the authenticated user's session data (specifically their \texttt{id}, \texttt{name}, and \texttt{role} as a creator or company). This information is heavily utilized by global components like the \texttt{Navbar}, which adapts its UI and navigation links based on the active user profile.
 
-\subsection{State Management}
-Our application relies on a structured state management approach to ensure data consistency and component reactivity. We implemented a hybrid strategy combining local component state with global application state management.
+To handle this efficiently without making redundant API calls (such as repeatedly fetching the user's full profile on every page load), we implemented a highly optimized state management architecture combining React's Context API with \textbf{TanStack React Query}.
 
-At the component level, we leverage React's useState hook for managing local state such as form inputs, loading states, and temporary UI interactions. For application-wide state that needs to be shared across multiple components, we implemented a context-based architecture using React's useContext hook.
+\subsection{Server State Caching with React Query}
+We rely on React Query for server-state management. As demonstrated in our \texttt{UserProvider}, we utilize the \texttt{useQuery} hook to fetch the current user's minimal details. React Query automatically caches this response. By configuring a \texttt{staleTime} of 30 minutes, we guarantee that as the user navigates the platform, the application instantly retrieves their details from the local cache rather than constantly querying the backend.
 
-The core of our global state management centers around the \texttt{WalletContext}, a custom context provider that maintains the user's wallet collection and tracks the currently selected wallet. This centralized approach ensures that wallet-related data remains synchronized across all components that depend on it. See more details on the context implementation in Section \ref{sec:contexts_web}.
+\begin{lstlisting}[caption={UserProvider utilizing React Query}, label={lst:user-provider}]
+export const UserProvider = ({ children }: { children: React.ReactNode }) => {
+    const queryClient = useQueryClient();
 
-We deliberately chose this combination over more complex state management solutions like Redux or state machines. While state machines offer powerful state transition control, our use case primarily involves managing straightforward data flows and form states. The useState approach provides sufficient flexibility for handling complex forms, such as the transaction creation form, where we manage both service-fetched data and user input validation simultaneously.
-
-\subsection{Components Interaction}
-The components are organized in a way that allows them to interact with each other. For example, the \texttt{limits} component uses the \texttt{limitsCarousel} component to display the limits of the different categories. In this case the \texttt{limits} component is the parent and the \texttt{limitsCarousel} component is the child, which means that all the data that the \texttt{limitsCarousel} component needs is passed as props in the \texttt{limits} component, sometimes callbacks are passed to the child component to handle the user interactions as shown in the example below.
-
-\begin{lstlisting}[caption={Limits Component child component}, label={lst:limits-component-child}]
-<LimitCarousel
-    limits={limits}
-    onEditClick={handleEditClick}
-    onDeleteClick={handleDeleteClick}
-/>
+    const { data: user, isLoading, refetch } = useQuery({
+        queryKey: ['user'],
+        queryFn: async () => {
+            const userData = await usersService.getCurrentUser();
+            return userData ? {
+                id: userData.id,
+                name: userData.name,
+                email: userData.email,
+                role: userData.role 
+            } : null;
+        },
+        staleTime: 1000 * 60 * 30, // Maintains data fresh for 30 minutes
+        retry: false,
+    });
+    // ...
+};
 \end{lstlisting}
 
-This way the father component has the ability to control the child appearance and behavior through props. When there are new information to be displayed in the child component, the father component can pass the new information as props and the child component will be able to use it to render the new information.
+\subsection{Context Distribution}
+Once React Query secures and caches the data, we use React's Context API to distribute it seamlessly throughout the component tree. We established a \texttt{UserContext} accompanied by a custom hook named \texttt{useUser}. This abstraction allows any component (like the \texttt{Navbar}) to cleanly access the user object, loading indicators, and authentication methods (such as \texttt{logout} or \texttt{refreshUser}) without prop-drilling or concerning itself with data-fetching logic.
 
-\subsection{API Interactions}
-In order for the components to have the data they should display, they need to call the services that fetch the data from the API. This is done by using the useEffect hook, which is a hook that is used to fetch the data when the component is mounted or when a specific state of the component changes. The next example shows how the \texttt{limits} component fetches the data from the API.
+To ensure these contexts operate application-wide, we centralized them within a \texttt{Providers} wrapper. This wrapper encapsulates the Next.js \texttt{RootLayout}, injecting the \texttt{QueryClientProvider}, \texttt{ThemeProvider}, and our \texttt{UserProvider} into the very top of the DOM hierarchy.
 
-\begin{lstlisting}[caption={Limits Component useEffect}, label={lst:limits-component-useEffect}]
+\begin{lstlisting}[caption={Global Providers Setup}, label={lst:providers-setup}]
+export function Providers({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient());
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <UserProvider>{children}</UserProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}
+\end{lstlisting}
+
+We deliberately choose this React Query and Context combination over traditional global state managers like Redux. While Redux is powerful for complex client-side interactions, our primary requirement was server-state synchronization. React Query handles caching, background re-fetching, and memory management out-of-the-box, significantly reducing boilerplate code while massively improving the performance of our global UI components.
+\subsection{Components Interaction}
+Our frontend design strictly follows React's unidirectional data flow to coordinate behaviors between complex view structures. Instead of letting deeply nested views manage isolated instances of data, a master parent component encapsulates the primary state and orchestrates its sub-components using specialized properties (\texttt{props}) and event callbacks.
+
+A clear architectural demonstration of this pattern is found in the communication dashboard. The \texttt{ChatDashboard} component acts as the parent container, maintaining the state of the active chat channel via the \texttt{selectedConvId} hook. It manages two highly specialized child components: the \texttt{ConversationSidebar} and the \texttt{ChatPage}.
+
+To achieve seamless interoperability without tight coupling, the parent component injects state down to its children and listens for updates through structural callbacks, as shown in the layout definition below:
+
+\begin{lstlisting}[caption={Parent state delegation inside ChatDashboard}, label={lst:chat-dashboard-interaction}]
+{/* Sidebar (List of Messages) - Receives active ID and a callback */}
+<div className="w-1/3 min-w-[300px] border-r border-zinc-800">
+    <ConversationSidebar 
+        profileId={parseInt(profileId)} 
+        isCompany={isCompany}
+        onSelectConversation={(id: number) => setSelectedConvId(id.toString())}
+        activeConversationId={selectedConvId ? parseInt(selectedConvId) : undefined}
+    />
+</div>
+
+{/* Chat Area - Dynamically rendered based on parent state */}
+<div className="flex-1 bg-zinc-950/50">
+    {selectedConvId ? (
+        <ChatPage id={selectedConvId} />
+    ) : (
+        <div className="h-full flex flex-col items-center justify-center">
+            <p className="text-lg font-medium">Select a conversation to start chatting</p>
+        </div>
+    )}
+</div>
+\end{lstlisting}
+
+In this design, the \texttt{ConversationSidebar} child component triggers the \texttt{onSelectConversation} callback whenever a user interacts with a conversation item. This action instantly updates the parent state (\texttt{selectedConvId}). Consequently, the parent triggers a re-render, automatically refreshing the visual selection highlight inside the sidebar while simultaneously safe-mounting or updating the \texttt{ChatPage} viewport with the freshly selected conversation context.
+
+
+\subsection{API Interactions and Service Layer}
+To separate business and data-fetching logic from the presentation layer, our frontend architecture enforces a strict separation of concerns using a dedicated service tier. Visual components do not query endpoints directly; instead, they interact with centralized service singletons that abstract network requests, interfaces, and API paths.
+
+Components consume this data lifecycle primarily through React's \texttt{useEffect} hook. This hook triggers asynchronous data collection when a component is mounted or when specific tracking states shift, safely managing internal loading flags and populating local state vectors upon successful response resolution.
+
+A clear implementation of this decoupling pattern can be observed in the sector categorization module. As demonstrated in Listing~\ref{lst:sector-component-useEffect}, the component uses a clean asynchronous sequence wrapper to handle sector ingestion on lifecycle initialization:
+
+\begin{lstlisting}[caption={Component data fetching via useEffect}, label={lst:sector-component-useEffect}]
 useEffect(() => {
-    setIsLoading(true);
-    const fetchData = async () => {
+    async function fetchSectors() {
         try {
-            const [newLimits, categories] = await Promise.all([
-                limitService.getLimits(walletId, limit, offset),
-                CategoryService.getCategories(walletId)
-            ]);
-            setLimits(newLimits);
-            setAllCategories(categories);
-        } catch (error) {
-            console.error("Error fetching data:", error);
+            const data = await sectorService.getAllSectors();
+            setAvailableSectors(data);
+        } catch (err) {
+            console.error("Error loading sectors:", err);
         } finally {
-            setIsLoading(false);
+            setLoadingSectors(false);
         }
-    };
-    fetchData();
+    }
+    fetchSectors();
 }, []);
 \end{lstlisting}
 
-\section{Report}
+Behind this interaction, the \texttt{SectorService} class encapsulates the low-level network communication. By implementing a standardized service interface (\texttt{ISectorService}) and relying on an internal centralized \texttt{ApiClient} abstraction alongside structured route dictionaries (\texttt{API\_ENDPOINTS}), the service provides strongly typed data contracts to the user interface, as detailed below:
 
-To provide users with better control over their finances, we implemented a customizable report generation feature using PDF generation. Before addressing the technical implementation, we first decided between client-side and server-side approaches. We chose client-side generation for several reasons: it reduces server load, enables real-time user feedback during the generation process (displaying progress indicators like "fetching transactions", "processing categories", "generating charts"), and offers better scalability for an application with potentially many users generating reports concurrently.
+\begin{lstlisting}[caption={Sector Service layer implementation}, label={lst:sector-service-implementation}]
+import ISectorService, { Sector } from "../interfaces/ISectorService";
+import { ApiClient } from "./apiClient";
+import { API_ENDPOINTS } from "./apiEndpoints";
 
-With this decision made, we then faced the challenge of incorporating graphics into PDFs. After research and testing, we considered the two most common approaches:
-\newpage
-\begin{itemize}
-    \item \textbf{Approach 1: Render graphics in the DOM and capture them as images for the PDF.} \\
-    This method involves creating the visualizations using standard rendering techniques (e.g., charts via libraries like Recharts or Chart.js), taking a screenshot of them (e.g., with \texttt{html2canvas}), and embedding the resulting image in the PDF. We also found some personal projects from developers who faced the same problem and created libraries to automate this process. However, since these libraries could be discontinued or their usage might be restricted in the future, we decided not to consider them.
+export interface Sector {
+    Id: number;
+    Name: string;
+}
 
-    \textbf{Pros:}
-    \begin{itemize}
-        \item Faster to implement, as it leverages existing visualization libraries.
-        \item Minimal need to manually manage graphical layout or rendering logic.
-    \end{itemize}
-    
-    \textbf{Cons:}
-    \begin{itemize}
-        \item Unreliable results: screenshots often failed or captured incomplete content.
-        \item Lower quality and resolution, especially when scaling or printing.
-        \item Limited styling control once the image is captured.
-    \end{itemize}
-    
-    \item \textbf{Approach 2: Generate graphics directly in SVG and include them in the PDF.} \\
-    This alternative involves writing logic to build and render the graphics directly as SVG elements, which are then embedded into the PDF.
+class SectorService implements ISectorService {
+    private apiClient = new ApiClient();
 
-    \textbf{Pros:}
-    \begin{itemize}
-        \item Full control over layout, styling, and rendering.
-        \item High-quality output that scales well for printing.
-        \item More reliable and consistent integration into the PDF.
-    \end{itemize}
-    
-    \textbf{Cons:}
-    \begin{itemize}
-        \item Requires additional development effort to implement custom rendering logic.
-        \item Increased complexity when we need advanced visuals(pie charts, bar charts, etc).
-    \end{itemize}
-\end{itemize}
+    async getAllSectors(): Promise<Sector[]> {
+        const response = await this.apiClient.get<Sector[]>(API_ENDPOINTS.sectors.getAll);
+        return response || [];
+    }
+}
 
-After evaluating both approaches, we opted for the second one due to its superior flexibility, quality, and reliability—despite the extra development effort required to manually build the SVG graphics.
+export default new SectorService();
+\end{lstlisting}
 
-
-
+This architecture offers major benefits over standard inline fetch approaches. If an API endpoint structure changes or if custom headers need to be appended globally, modifications are constrained to the network layer configs (\texttt{ApiClient} or \texttt{API\_ENDPOINTS}), completely neutralizing side effects over the visual DOM tree and rendering components.
 
 \section{Contexts} \label{sec:contexts_web}
-In the React framework, contexts are used to share data between components without the need to pass props through the entire component tree. This is especially useful when the same data needs to be accessed across multiple views. In our implementation, we use several contexts, but the most important one is the \texttt{WalletContext}, which stores both the selected wallet and the list of all wallets belonging to the user. This is essential because most of our main components need access to this data.
+In modern web applications, particularly those utilizing meta-frameworks like Next.js that blend server-side rendering with client-side hydration, sharing reactive state across deeply nested components can become complex. In the React ecosystem, contexts are used to share data and state between components without the need to pass props through the entire component tree (\textit{prop-drilling}). In our implementation, we strategically leverage React's Context API to manage global state, handle identity validation, and, most importantly, provide a unified real-time infrastructure through the \texttt{SignalRContext}.
 
-We treat this context like a cache, allowing us to access wallet information without making repeated API calls. This is particularly helpful on the dashboard page, where wallet data needs to be available at all times.
+The \texttt{SignalRContext} acts as a shared, persistent architectural foundation for the entire messaging ecosystem of Hubly. Instead of forcing separate views—such as the conversation list sidebar and the active chat viewport—to open independent network connections, this context instantiates and maintains a single, global bi-directional WebSocket connection with our backend event hub (\texttt{/api/hubly-events}). 
 
-To implement this properly, we created a \texttt{WalletProvider} component. It wraps the parts of the application that need access to the wallet context. This component handles the state for both the wallets and the selected wallet. It fetches data from the API, stores it in the context, and provides it to the components that depend on it. Here's what the return statement of the \texttt{WalletProvider} component looks like:
+We treat this context as a centralized connection manager implementing a Singleton-like behavior. This approach optimizes client and server resources by avoiding redundant handshakes, ensuring that whenever a user navigates between chat modules, the underlying stream remains active, synchronized, and ready to intercept server-driven events.
 
-\begin{lstlisting}[caption={WalletProvider}, label={lst:wallet-provider}]
+To implement this infrastructure, we developed a \texttt{SignalRProvider} component. It wraps the specific layout structures within the application that require real-time capabilities (such as creator and company chat sub-routes). This component initializes the connection lifecycle, configures automatic reconnection strategies, handles connection errors, and exposes the active hub instance to all nested consumers. The return statement of the \texttt{SignalRProvider} component is implemented as follows:
+
+\begin{lstlisting}[caption={SignalRProvider implementation snippet}, label={lst:signalr-provider}]
     return (
-        <WalletContext.Provider
-          value={{
-            currentWallet: currentWallet!,
-            wallets,
-            loading,
-            changeWallet,
-            changeBalance,
-            editWallet,
-            deleteWallet,
-            ...
-          }}
-        >
-          {children}
-        </WalletContext.Provider>
-      );
+        <SignalRContext.Provider value={{ connection, isConnected }}>
+            {children}
+        </SignalRContext.Provider>
+    );
 \end{lstlisting}
 
-As shown above, the \texttt{WalletProvider} component returns a \texttt{WalletContext.Provider}, which supplies the selected wallet, all wallets, and a set of functions to manage them. When the provider is mounted, it fetches the wallets from the API and stores them in the context.
+As shown above, the provider supplies the underlying \texttt{HubConnection} object along with a reactive boolean flag (\texttt{isConnected}) that dictates whether the client is currently online. When the provider is mounted within a layout, it automatically kicks off the connection startup sequence asynchronously.
 
-To make it easier to use this context in components, we also created a custom hook called \texttt{useWallet}. This hook allows components to access wallet data without having to directly use \texttt{useContext(WalletContext)}. Here's an example of how it's used:
+To streamline the consumption of this real-time stream inside our functional components, we exposed a custom hook called \texttt{useSignalR}. This hook abstracts away the internal mechanics of React's \texttt{useContext}, allowing any message feed or navigation bar to instantly tap into the persistent connection. A typical invocation of this hook inside active views looks as follows:
 
-\begin{lstlisting}[caption={useWallet}, label={lst:use-wallet}]
-const { currentWallet, wallets, loading, changeWallet, changeBalance, editWallet, deleteWallet } = useWallet();
+\begin{lstlisting}[caption={Consuming the useSignalR hook}, label={lst:use-signalr-consumption}]
+const { connection, isConnected } = useSignalR();
 \end{lstlisting}
 
-The useWallet hook was created so the components that need to access the wallets or the selected wallet can do it without having to use the \texttt{useContext(WalletContext)}. Here is the implementation of the useWallet hook.
+This hook is heavily utilized across our messaging components. For instance, the \texttt{ChatPage} uses it to invoke streaming topics (e.g., \texttt{JoinTopic}) and listen to incoming payloads like \texttt{NewMessage} or \texttt{MessageUpdated} to update the UI instantly. Simultaneously, the \texttt{ConversationSidebar} consumes the exact same connection instance to listen for \texttt{SidebarUpdate} events, keeping unread message counts and preview snippets dynamically synchronized in the background.
 
-\begin{lstlisting}[caption={useWallet hook}, label={lst:use-wallet-hook}]
-    export const useWallet = (): WalletContextType => {
-        const ctx = useContext(WalletContext);
-        if (!ctx) {
-          throw new Error('useWallet must be used within WalletProvider');
-        }
-        return ctx;
-      };
+The defensive implementation of the \texttt{useSignalR} custom hook ensures architectural integrity by verifying the existence of the context boundary during runtime:
+
+\begin{lstlisting}[caption={useSignalR hook implementation}, label={lst:use-signalr-hook}]
+export const useSignalR = () => {
+    const context = useContext(SignalRContext);
+    if (!context) {
+        throw new Error("useSignalR must be used within a SignalRProvider");
+    }
+    return context;
+};
 \end{lstlisting}
 
-There are other contexts that are used in the application such as: 
+In addition to the real-time communication infrastructure, other vital contexts were implemented to separate concerns and govern different lifecycles of the Hubly ecosystem:
 
 \begin{itemize}
-    \item \texttt{RegisterContext} that is used to store the email of the user when the user is registering.
-    \item \texttt{ThemeContext} that is used to store the theme of the application.
+    \item \texttt{UserContext} (\texttt{useUser}): Acts as the application's global identity state and access guard. It caches the authenticated user's profile and roles, serving as a client-side routing middleware that redirects incomplete sessions to the onboarding flow or restricts unauthorized access to core dashboards.
+    \item \texttt{DashboardContext} (\texttt{useDashboardContext}): Serves as a localized state scope for the main dashboard layout. It manages shared layout behaviors, such as global loading states (\texttt{isLoading}) across separate asynchronous components, including recommendation feeds and trending content carousels.
 \end{itemize}
 
-\section{Middleware}
-To help user experience and prevent unauthorized access to protected frontend pages, we implement a Next.js middleware\cite{nextjs-middleware} that handles authentication-based routing decisions. This middleware operates exclusively on frontend page routes, ensuring users are properly directed based on their authentication status without interfering with API endpoint functionality, this middleware only checks if the token exists in the cookies and if it does it redirects to the dashboard page and then the backend checks if the token is valid, since we can't have the value of the cookies via typescript, if the token does not exist it redirects to the home page.
 
-\begin{lstlisting}[caption={Middleware}, label={lst:middleware_frontend_web}]
+\section{Middleware} \label{sec:middleware_web}
+To optimize navigation and enforce client-side routing boundaries, the application implements a custom Next.js middleware\cite{nextjs-middleware} that intercepts incoming requests before they reach the rendering phase. This mechanism operates strictly on frontend page routes, ensuring that users are seamlessly directed to the appropriate views based on their session state without introducing overhead or interfering with backend API operations. 
+
+Architecturally, the authentication token is stored within a cookie configured with the \texttt{HttpOnly} attribute to prevent client-side access and mitigate Cross-Site Scripting (XSS) vulnerabilities. However, since the middleware executes exclusively on the server-side during the request lifecycle, it can securely evaluate the presence of the token from the HTTP request headers. At this layer, the middleware performs a lightweight, non-blocking evaluation: it simply verifies whether the token exists. It does not cryptographically validate the token's structural integrity or expiration date, as this computationally expensive verification is properly deferred to the backend services during subsequent API data fetches. If a protected route is requested and the token is absent, the user is proactively redirected to the landing page. Conversely, if an authenticated user attempts to access redundant public registration forms, they are forwarded directly to the main dashboard.
+
+\begin{lstlisting}[caption={Middleware routing controls}, label={lst:middleware_frontend_web}]
 const publicRoutes = ['/', '/register', '/register/confirmEmail'];
 
 export function middleware(request: NextRequest) {
@@ -177,11 +213,11 @@ export function middleware(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
 
     if (!isPublicRoute && !token) {
-    return NextResponse.redirect(new URL('/', request.url));
+        return NextResponse.redirect(new URL('/', request.url));
     }
 
     if ((pathname === '/' || pathname === '/register') && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+        return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
     return NextResponse.next();
@@ -192,9 +228,9 @@ export const config = {
 };
 \end{lstlisting}
 
-The middleware intercepts requests to frontend pages and evaluates the user's authentication status through cookie-stored tokens. It automatically redirects users to appropriate pages based on their authentication state, creating a seamless navigation experience while maintaining security boundaries for protected content.
+By intercepting top-level document requests, the middleware evaluates the user's navigational context through these secure cookie lookups. It handles automated adjustments to the application's flow in real-time, delivering a fluid user experience while establishing initial guardrails for protected layout modules.
 
-\textbf{Important Note:} This middleware specifically excludes API routes (as defined by the matcher configuration). The middleware focuses solely on frontend page routing and user experience optimization.
+\textbf{Important Note:} As explicitly defined by the negative lookahead inside the \texttt{config.matcher} array, this middleware intentionally bypasses all API endpoints, internal Next.js build operations, and static media assets. This deliberate separation of concerns isolates the routing logic entirely to frontend page optimization and basic authentication gating.
 
 \subsection{Architecture Components}
 \textbf{Route Classification System:}
