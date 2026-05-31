@@ -6,7 +6,7 @@
     \label{fig:web-frontend-structure}
 \end{figure}
 
-To maintain a clean separation of concerns and ensure scalability, the frontend architecture is divided into three primary directories:
+\paragraph{}To maintain a clean separation of concerns and ensure scalability, the frontend architecture is divided into three primary directories:
 
 \begin{itemize}
     \item \textbf{app:} This directory serves as the structural foundation of the platform, utilizing the Next.js App Router for file-system-based routing. Rather than handling imperative user navigation, it defines the URL endpoints of the application. The files within this directory act as lightweight entry points that extract URL parameters, define route-specific layouts, wrap pages with necessary Context Providers (such as injecting a \texttt{SignalRProvider} for chat routes), and delegate the actual UI rendering and complex logic to dedicated components.
@@ -15,19 +15,19 @@ To maintain a clean separation of concerns and ensure scalability, the frontend 
 \end{itemize}
 
 \section{Components Architecture}
-Components form the structural foundation of our frontend. By designing them to be highly decoupled from specific pages, we ensure maximum reusability and maintainability across the entire application.
+\paragraph{}Components form the structural foundation of our frontend. By designing them to be highly decoupled from specific pages, we ensure maximum reusability and maintainability across the entire application.
 
 We adopted a modular approach for the \texttt{components} folder to improve code maintainability. General-purpose elements that appear across multiple views—such as buttons and form inputs—are centralized in the \texttt{ui} subdirectory. Utilizing the \texttt{shadcn/ui} library for these shared components allowed us to enforce a standardized and cohesive user interface.
 
 Conversely, components that are tailored to a specific feature are grouped into dedicated, context-specific folders. For instance, the \texttt{chat} and \texttt{search} directories house specialized components such as \texttt{ChatDashboard} and \texttt{CreatorSearch}, ensuring that domain-specific logic remains neatly compartmentalized and easy to locate.
 \section{Global State and Contexts} \label{sec:contexts_web}
 
-In our application, certain data must be instantly accessible across almost every view. The most critical piece of global information is the authenticated user's session data (specifically their \texttt{id}, \texttt{name}, and \texttt{role} as a creator or company). This information is heavily utilized by global components like the \texttt{Navbar}, which adapts its UI and navigation links based on the active user profile.
+\paragraph{}In our application, certain data must be instantly accessible across almost every view. The most critical piece of global information is the authenticated user's session data (specifically their \texttt{id}, \texttt{name}, and \texttt{role} as a creator or company). This information is heavily utilized by global components like the \texttt{Navbar}, which adapts its UI and navigation links based on the active user profile.
 
 To handle this efficiently without making redundant API calls (such as repeatedly fetching the user's full profile on every page load), we implemented a highly optimized state management architecture combining React's Context API with \textbf{TanStack React Query}.
 
 \subsection{Server State Caching with React Query}
-We rely on React Query for server-state management. As demonstrated in our \texttt{UserProvider}, we utilize the \texttt{useQuery} hook to fetch the current user's minimal details. React Query automatically caches this response. By configuring a \texttt{staleTime} of 30 minutes, we guarantee that as the user navigates the platform, the application instantly retrieves their details from the local cache rather than constantly querying the backend.
+\paragraph{}We rely on React Query for server-state management. As demonstrated in our \texttt{UserProvider}, we utilize the \texttt{useQuery} hook to fetch the current user's minimal details. React Query automatically caches this response. By configuring a \texttt{staleTime} of 30 minutes, we guarantee that as the user navigates the platform, the application instantly retrieves their details from the local cache rather than constantly querying the backend.
 
 \begin{lstlisting}[caption={UserProvider utilizing React Query}, label={lst:user-provider}]
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
@@ -196,11 +196,12 @@ In addition to the real-time communication infrastructure, other vital contexts 
 \begin{itemize}
     \item \texttt{UserContext} (\texttt{useUser}): Acts as the application's global identity state and access guard. It caches the authenticated user's profile and roles, serving as a client-side routing middleware that redirects incomplete sessions to the onboarding flow or restricts unauthorized access to core dashboards.
     \item \texttt{DashboardContext} (\texttt{useDashboardContext}): Serves as a localized state scope for the main dashboard layout. It manages shared layout behaviors, such as global loading states (\texttt{isLoading}) across separate asynchronous components, including recommendation feeds and trending content carousels.
+    \item \texttt{And some more...}
 \end{itemize}
 
 
 \section{Middleware} \label{sec:middleware_web}
-To optimize navigation and enforce client-side routing boundaries, the application implements a custom Next.js middleware\cite{nextjs-middleware} that intercepts incoming requests before they reach the rendering phase. This mechanism operates strictly on frontend page routes, ensuring that users are seamlessly directed to the appropriate views based on their session state without introducing overhead or interfering with backend API operations. 
+To optimize navigation and enforce client-side routing boundaries, the application implements a custom Next.js middleware that intercepts incoming requests before they reach the rendering phase. This mechanism operates strictly on frontend page routes, ensuring that users are seamlessly directed to the appropriate views based on their session state without introducing overhead or interfering with backend API operations. 
 
 Architecturally, the authentication token is stored within a cookie configured with the \texttt{HttpOnly} attribute to prevent client-side access and mitigate Cross-Site Scripting (XSS) vulnerabilities. However, since the middleware executes exclusively on the server-side during the request lifecycle, it can securely evaluate the presence of the token from the HTTP request headers. At this layer, the middleware performs a lightweight, non-blocking evaluation: it simply verifies whether the token exists. It does not cryptographically validate the token's structural integrity or expiration date, as this computationally expensive verification is properly deferred to the backend services during subsequent API data fetches. If a protected route is requested and the token is absent, the user is proactively redirected to the landing page. Conversely, if an authenticated user attempts to access redundant public registration forms, they are forwarded directly to the main dashboard.
 
@@ -229,8 +230,6 @@ export const config = {
 \end{lstlisting}
 
 By intercepting top-level document requests, the middleware evaluates the user's navigational context through these secure cookie lookups. It handles automated adjustments to the application's flow in real-time, delivering a fluid user experience while establishing initial guardrails for protected layout modules.
-
-\textbf{Important Note:} As explicitly defined by the negative lookahead inside the \texttt{config.matcher} array, this middleware intentionally bypasses all API endpoints, internal Next.js build operations, and static media assets. This deliberate separation of concerns isolates the routing logic entirely to frontend page optimization and basic authentication gating.
 
 \subsection{Architecture Components}
 \textbf{Route Classification System:}
