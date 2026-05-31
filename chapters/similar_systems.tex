@@ -1,11 +1,11 @@
 \chapter{Similar Systems} \label{ch:similar_systems}
 
-Influencer marketing management is a rapidly evolving area in the software industry, with several platforms available on the market offering tools to help brands discover creators, track campaign metrics, and establish professional partnerships. This chapter presents a brief comparative analysis of two notable applications in this sector — Collab Only and Influencity — highlighting their strengths, technical inspirations, and architectural limitations in relation to Hubly.
+\paragraph{}Influencer marketing management is a rapidly evolving area in the software industry, with several platforms available on the market offering tools to help brands discover creators, track campaign metrics, and establish professional partnerships. This chapter presents a brief comparative analysis of two notable applications in this sector — Collab Only and Influencity — highlighting their strengths, technical inspirations, and architectural limitations in relation to Hubly.
 
 The goal of this comparison is to understand how these existing solutions address common influencer management needs and to identify critical gaps that Hubly aims to fill, particularly in terms of platform flexibility, advanced search capabilities, active user intent, granular multi-profile organization, and dedicated internal communication frameworks.
 
 \section{Collab Only}
-Collab Only is a niche marketplace application in the influencer marketing sector designed to connect brands and creators through a mutual interest matching model. Operating with a mobile-first approach, it utilizes an interface heavily inspired by matchmaking applications (such as Tinder), where a potential connection is established only after both a company and a creator swipe positively on each other's profiles based on initial registration data.
+\paragraph{}Collab Only is a niche marketplace application in the influencer marketing sector designed to connect brands and creators through a mutual interest matching model. Operating with a mobile-first approach, it utilizes an interface heavily inspired by matchmaking applications (such as Tinder), where a potential connection is established only after both a company and a creator swipe positively on each other's profiles based on initial registration data.
 
 From a functional standpoint, Collab Only introduces a highly valuable business concept regarding partnership classification. It allows users to specify the explicit nature of the collaboration they are seeking, categorizing them into distinct operational models:
 \begin{itemize}
@@ -15,7 +15,7 @@ From a functional standpoint, Collab Only introduces a highly valuable business 
     \item \textbf{And More...}
 
 \end{itemize}
-This precise classification of partnership models represents an excellent business data structure that Hubly recognizes as a high-value asset to be integrated and refined within its own business model.
+\paragraph{}This precise classification of partnership models represents an excellent business data structure that Hubly recognizes as a high-value asset to be integrated and refined within its own business model.
 
 However, a deep technical and operational analysis of Collab Only reveals major structural limitations that hinder its adoption in real-world startup workflows:
 \begin{itemize}
@@ -27,7 +27,7 @@ However, a deep technical and operational analysis of Collab Only reveals major 
 In summary, while Collab Only introduces an innovative approach by defining distinct partnership types, its overall execution remains unpractical for professional use due to low market adoption, the rigid absence of a multi-criteria search engine, and a lack of data organization for multi-channel creators. 
 
 \section{Influencity}
-Influencity is widely considered an industry-leading platform in the influencer marketing ecosystem, boasting an established market presence with millions of indexed profiles. It serves as an enterprise-grade software-as-a-service (SaaS) designed to provide companies with robust data-driven metrics. 
+\paragraph{}Influencity is widely considered an industry-leading platform in the influencer marketing ecosystem, boasting an established market presence with millions of indexed profiles. It serves as an enterprise-grade software-as-a-service (SaaS) designed to provide companies with robust data-driven metrics. 
 
 From a technical and architectural standpoint, Influencity serves as an excellent reference and inspiration for the future scaling of Hubly. Its infrastructure relies heavily on the integration of native social media Graph APIs (such as Meta Graph API and YouTube Data API). Through these programmatic connections, the platform automatically retrieves, synchronizes, and audits real-time metrics. Furthermore, by requesting administrative access tokens from consenting users, it unlocks deep analytical insights regarding target audiences. This allows companies to evaluate high-value demographic data, including:
 \begin{itemize}
@@ -35,7 +35,7 @@ From a technical and architectural standpoint, Influencity serves as an excellen
     \item geographic distribution and top countries of origin,
     \item gender audience ratios and engagement authenticity metrics.
 \end{itemize}
-This layer of deep audience intelligence represents an invaluable technological asset that demonstrates how API-driven data processing can maximize the value proposition of a marketing application.
+\paragraph{}This layer of deep audience intelligence represents an invaluable technological asset that demonstrates how API-driven data processing can maximize the value proposition of a marketing application.
 
 However, a critical evaluation of Influencity’s operational mechanics reveals significant structural vulnerabilities and architectural limitations:
 \begin{itemize}
@@ -48,6 +48,6 @@ However, a critical evaluation of Influencity’s operational mechanics reveals 
 In summary, while Influencity represents a peak technical standard for audience data analysis via native APIs, its lack of user intent centralization and failure to mitigate communication fragmentation leaves a massive opening in the mid-market. 
 
 \section{Chapter Synthesis}
-By analyzing both systems, a clear market polarization becomes evident. On one hand, Collab Only attempts to build a bilateral marketplace but fails due to its oversimplified, rigid matchmaking mechanics and lack of essential technical features like search engines and proper data structures. On the other hand, Influencity provides an incredibly powerful, API-driven analytical engine, but operates purely as a cold, enterprise-grade data-mining spreadsheet, completely ignoring communication management and user collaboration intent. 
+\paragraph{}By analyzing both systems, a clear market polarization becomes evident. On one hand, Collab Only attempts to build a bilateral marketplace but fails due to its oversimplified, rigid matchmaking mechanics and lack of essential technical features like search engines and proper data structures. On the other hand, Influencity provides an incredibly powerful, API-driven analytical engine, but operates purely as a cold, enterprise-grade data-mining spreadsheet, completely ignoring communication management and user collaboration intent. 
 
 Hubly capitalizes on these exact market failures. By combining the high-intent, dual-sided community model of a marketplace with the professional rigor of a paginated, multi-criteria search engine, profile-specific chat systems, and a private negotiation CRM pipeline, Hubly bridges the gap between raw data analysis and structured workflow management, creating a practical and accessible alternative for the modern startup ecosystem.

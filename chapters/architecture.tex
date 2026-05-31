@@ -1,5 +1,5 @@
 \chapter{Architecture}\label{ch:architecture}
-This chapter details the containerized, multi-tiered architecture of the \textbf{Hubly} platform. We explore the structural layout, the isolation of deployment environments, and how the distinct layers—Frontend, Backend, and Database—interact through secure communication protocols.
+\paragraph{}This chapter details the containerized, multi-tiered architecture of the \textbf{Hubly} platform. We explore the structural layout, the isolation of deployment environments, and how the distinct layers—Frontend, Backend, and Database—interact through secure communication protocols.
 
 \section{General Structure}
 
@@ -10,26 +10,38 @@ This chapter details the containerized, multi-tiered architecture of the \textbf
     \label{fig:architecture}
 \end{figure}
 
-The architecture of the Hubly project follows a professional, multi-tiered design decoupled into isolated environments using Docker containers. The structural layout and network topology are conceptually illustrated in Figure \ref{fig:architecture}.
+\paragraph{}The architecture of the Hubly project follows a professional, multi-tiered design decoupled into isolated environments using Docker containers. The structural layout and network topology are conceptually illustrated in Figure \ref{fig:architecture}.
 
 As depicted in the diagram, incoming client traffic (\textit{Requests}) does not interact directly with the application services. Instead, an \textbf{Nginx} container acts as a reverse proxy and entry point, managing incoming requests and routing them efficiently to the appropriate internal services based on the context of the URL.
 
 The architecture is divided into three primary functional layers, segregated by virtual container networks to guarantee security and a clear separation of concerns:
 
 \begin{itemize}
-    \item \textbf{Presentation Layer (Frontend):} Implemented as a high-performance web dashboard using React and Next.js. It handles user interaction, UI rendering, and dispatches asynchronous requests to the API. It resides exclusively within the internal \texttt{app-net} network.
-    \item \textbf{Application Layer (Backend):} Developed in ASP.NET Core, this layer encapsulates the core business logic, handles multi-criteria search queries, and manages private CRM communication tags. It serves as a bridge between the presentation and data environments, belonging simultaneously to both virtual networks (\texttt{app-net} and \texttt{db-net}).
-    \item \textbf{Data Layer (Database):} Powered by a PostgreSQL relational database engine, this layer is responsible for data persistence, storing entity attributes, and tracking conversation states.
+    \item \textbf{Presentation Layer (Frontend):} Implemented as a high-performance web dashboard using React and Next.js. It handles user interaction, UI rendering, and dispatches asynchronous requests to the API. It resides exclusively within the internal \texttt{app-net} network. This container (hubly-web) is optmized for hot-realoding and server-side rendering, during the development phase.
+    \item \textbf{Application Layer (Backend):} Developed in ASP.NET Core, this layer encapsulates the core business logic, handles multi-criteria search queries, and manages private communication tags. It serves as a bridge between the presentation and data environments, belonging simultaneously to both virtual networks (\texttt{app-net} and \texttt{db-net}). Located in the hubly-api container, it exposes a secure RESTful API for frontend communication and abstracts database interactions through Entity Framework Core.
+    \item \textbf{Data Layer (Database):} Powered by a PostgreSQL relational database engine, this layer is responsible for data persistence, storing entity attributes, and tracking conversation states. Located in the hubly-db container, it is completely isolated within the \texttt{db-net} network, ensuring that all database interactions are mediated through the backend application layer, thus enhancing security and data integrity.
 \end{itemize}
 
+\subsection{Reverse Proxy Configuration}
+\paragraph{}The Nginx container serves as the primary entry point for all incoming requests. Its configuration acts as a traffic manager, directing requests to either the API (via the \texttt{/api} route) or the Frontend application.
+
 \subsection{Network Isolation and Communication Protocols}
-Communication between the components is strictly governed by Docker network boundaries to enforce security. The infrastructure is segmented into two distinct virtual bridges:
+\paragraph{}Communication between the components is strictly governed by Docker network boundaries to enforce security. The infrastructure is segmented into two distinct virtual bridges:
 \begin{enumerate}
     \item \textbf{\texttt{app-net}:} A network dedicated to web routing. The Nginx proxy communicates with the Frontend and Backend via HTTP. The web interface dispatches requests exclusively through a secure RESTful API exposed by the backend container.
     \item \textbf{\texttt{db-net}:} A heavily isolated backend network. The Database is entirely hidden from the external world and the Frontend layer. The Backend communicates with PostgreSQL through Entity Framework Core over this private network, abstracting database operations and drastically reducing the platform's attack surface.
 \end{enumerate}
 
 This network infrastructure ensures that Hubly is not only modular and maintainable from a software engineering perspective but also robust, secure, and ready for containerized enterprise deployment.
+
+\subsection{Advantages of Containerized Distribution}
+\paragraph{}The decision to distribute our infrastructure into multiple specialized containers offers several critical advantages that enhance the scalability, maintainability, and security of the Hubly project:
+
+\begin{itemize}
+\item \textbf{Environmental Consistency}: By encapsulating each service within its own container, we ensure that the runtime environment is identical across all development, testing, and production stages. This eliminates the "it works on my machine" phenomenon, guaranteeing that dependencies and configurations remain consistent regardless of the underlying host.
+\item \textbf{Decoupled Scalability}: Since each component (Frontend, Backend, Database) operates as an independent unit, we can scale specific parts of the application according to demand. For instance, the Backend can be scaled to handle higher computational loads without requiring changes to the Frontend or the database infrastructure.
+\item \textbf{Fault Isolation}: The distributed nature of our architecture acts as a natural barrier against cascading failures. If a service experiences a runtime error or instability, the remaining containers continue to operate independently, ensuring that the system remains partially available and resilient to localized issues.
+\end{itemize}
 
 \input{sections/backend_technologies}
 \input{sections/frontend_technologies}
