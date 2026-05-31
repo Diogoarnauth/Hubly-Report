@@ -55,7 +55,7 @@ This ensures that actions such as creating a user record, generating an initial 
 \subsubsection{Conceptual Workflow and Feed Customization}
 \paragraph{}The tracking architecture continuously captures interaction telemetry by logging profile view events whenever a user interacts with a company page or a creator's social channel. This raw history serves as the primary data foundation to make appear individual interest profiles. To maximize relevance, the engine applies distinct recommendation behaviors depending on the authenticated user's role:
 \begin{itemize}
-    \item \textbf{Targeted Company Feeds:} When a user searches for corporate entities, the parameters and metadata of those searches are logged in their history. The engine then processes this data to dynamically recommend new company profiles that share similar characteristics—such as market sectors, geographic location, and business scale—with the ones the user has been actively searching for.
+    \item \textbf{Targeted Company Feeds:} When a user searches for corporate entities, the parameters and metadata of those searches are logged in their history. The engine then processes this data to dynamically recommend new company profiles that share similar characteristics, such as market sectors, geographic location, and business scale, with the ones the user has been actively searching for.
     \item \textbf{Targeted Creator Social Profile Feeds:} On the other hand, when a user searches for content creators, those search criteria are preserved. The engine uses this history to filter and promote new creator social profiles whose platform focuses, audience metrics, and pricing structures match the niche and scope of the user's past search behavior.
 \end{itemize}
 

@@ -71,7 +71,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 We deliberately choose this React Query and Context combination over traditional global state managers like Redux. While Redux is powerful for complex client-side interactions, our primary requirement was server-state synchronization. React Query handles caching, background re-fetching, and memory management out-of-the-box, significantly reducing boilerplate code while massively improving the performance of our global UI components.
 \subsection{Components Interaction}
-Our frontend design strictly follows React's unidirectional data flow to coordinate behaviors between complex view structures. Instead of letting deeply nested views manage isolated instances of data, a master parent component encapsulates the primary state and orchestrates its sub-components using specialized properties (\texttt{props}) and event callbacks.
+\paragraph{}Our frontend design strictly follows React's unidirectional data flow to coordinate behaviors between complex view structures. Instead of letting deeply nested views manage isolated instances of data, a master parent component encapsulates the primary state and orchestrates its sub-components using specialized properties (\texttt{props}) and event callbacks.
 
 A clear architectural demonstration of this pattern is found in the communication dashboard. The \texttt{ChatDashboard} component acts as the parent container, maintaining the state of the active chat channel via the \texttt{selectedConvId} hook. It manages two highly specialized child components: the \texttt{ConversationSidebar} and the \texttt{ChatPage}.
 
@@ -104,7 +104,7 @@ In this design, the \texttt{ConversationSidebar} child component triggers the \t
 
 
 \subsection{API Interactions and Service Layer}
-To separate business and data-fetching logic from the presentation layer, our frontend architecture enforces a strict separation of concerns using a dedicated service tier. Visual components do not query endpoints directly; instead, they interact with centralized service singletons that abstract network requests, interfaces, and API paths.
+\paragraph{}To separate business and data-fetching logic from the presentation layer, our frontend architecture enforces a strict separation of concerns using a dedicated service tier. Visual components do not query endpoints directly; instead, they interact with centralized service singletons that abstract network requests, interfaces, and API paths.
 
 Components consume this data lifecycle primarily through React's \texttt{useEffect} hook. This hook triggers asynchronous data collection when a component is mounted or when specific tracking states shift, safely managing internal loading flags and populating local state vectors upon successful response resolution.
 
@@ -153,7 +153,7 @@ export default new SectorService();
 This architecture offers major benefits over standard inline fetch approaches. If an API endpoint structure changes or if custom headers need to be appended globally, modifications are constrained to the network layer configs (\texttt{ApiClient} or \texttt{API\_ENDPOINTS}), completely neutralizing side effects over the visual DOM tree and rendering components.
 
 \section{Contexts} \label{sec:contexts_web}
-In modern web applications, particularly those utilizing meta-frameworks like Next.js that blend server-side rendering with client-side hydration, sharing reactive state across deeply nested components can become complex. In the React ecosystem, contexts are used to share data and state between components without the need to pass props through the entire component tree (\textit{prop-drilling}). In our implementation, we strategically leverage React's Context API to manage global state, handle identity validation, and, most importantly, provide a unified real-time infrastructure through the \texttt{SignalRContext}.
+\paragraph{}In modern web applications, particularly those utilizing meta-frameworks like Next.js that blend server-side rendering with client-side hydration, sharing reactive state across deeply nested components can become complex. In the React ecosystem, contexts are used to share data and state between components without the need to pass props through the entire component tree (\textit{prop-drilling}). In our implementation, we strategically leverage React's Context API to manage global state, handle identity validation, and, most importantly, provide a unified real-time infrastructure through the \texttt{SignalRContext}.
 
 The \texttt{SignalRContext} acts as a shared, persistent architectural foundation for the entire messaging ecosystem of Hubly. Instead of forcing separate views—such as the conversation list sidebar and the active chat viewport—to open independent network connections, this context instantiates and maintains a single, global bi-directional WebSocket connection with our backend event hub (\texttt{/api/hubly-events}). 
 
@@ -201,7 +201,7 @@ In addition to the real-time communication infrastructure, other vital contexts 
 
 
 \section{Middleware} \label{sec:middleware_web}
-To optimize navigation and enforce client-side routing boundaries, the application implements a custom Next.js middleware that intercepts incoming requests before they reach the rendering phase. This mechanism operates strictly on frontend page routes, ensuring that users are seamlessly directed to the appropriate views based on their session state without introducing overhead or interfering with backend API operations. 
+\paragraph{}To optimize navigation and enforce client-side routing boundaries, the application implements a custom Next.js middleware that intercepts incoming requests before they reach the rendering phase. This mechanism operates strictly on frontend page routes, ensuring that users are seamlessly directed to the appropriate views based on their session state without introducing overhead or interfering with backend API operations. 
 
 Architecturally, the authentication token is stored within a cookie configured with the \texttt{HttpOnly} attribute to prevent client-side access and mitigate Cross-Site Scripting (XSS) vulnerabilities. However, since the middleware executes exclusively on the server-side during the request lifecycle, it can securely evaluate the presence of the token from the HTTP request headers. At this layer, the middleware performs a lightweight, non-blocking evaluation: it simply verifies whether the token exists. It does not cryptographically validate the token's structural integrity or expiration date, as this computationally expensive verification is properly deferred to the backend services during subsequent API data fetches. If a protected route is requested and the token is absent, the user is proactively redirected to the landing page. Conversely, if an authenticated user attempts to access redundant public registration forms, they are forwarded directly to the main dashboard.
 
@@ -232,7 +232,7 @@ export const config = {
 By intercepting top-level document requests, the middleware evaluates the user's navigational context through these secure cookie lookups. It handles automated adjustments to the application's flow in real-time, delivering a fluid user experience while establishing initial guardrails for protected layout modules.
 
 \subsection{Architecture Components}
-\textbf{Route Classification System:}
+\paragraph{}\textbf{Route Classification System:}
 The publicRoutes array defines frontend pages accessible without authentication, including the home page (/), user registration (/register), and email confirmation (/register/confirmEmail) routes. This centralized configuration allows for easy modification of public access permissions as the application grows.
 
 \textbf{Selective Route Matching:}

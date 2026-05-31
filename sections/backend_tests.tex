@@ -1,8 +1,8 @@
 \section{Backend Tests} \label{sec:backend_tests}
-We adopted a layered testing approach to ensure high confidence in our system’s behavior. With some tests written across the solution, our goal was to validate that every function in the application performs exactly as intended — both in isolation and when integrated with other core sub-systems. This rigorous test coverage helps us identify regressions early, improve maintainability, and confidently refactor our codebase during agile iterations.
+\paragraph{}We adopted a layered testing approach to ensure high confidence in our system’s behavior. With some tests written across the solution, our goal was to validate that every function in the application performs exactly as intended — both in isolation and when integrated with other core sub-systems. This rigorous test coverage helps us identify regressions early, improve maintainability, and confidently refactor our codebase during agile iterations.
 
 \subsubsection{Unit Tests}
-For the domain logic residing in our Service Layer, we wrote unit tests using Moq to isolate external system behaviors, such as database repositories and cross-cutting infrastructure concerns. These tests validate:
+\paragraph{}For the domain logic residing in our Service Layer, we wrote unit tests using Moq to isolate external system behaviors, such as database repositories and cross-cutting infrastructure concerns. These tests validate:
 
 \begin{itemize}
     \item Strict domain validation rules (e.g., preventing empty, white-spaced, or overly long conversation tag names).

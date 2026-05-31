@@ -31,17 +31,17 @@
 
 The relational model was designed to support the functional and structural needs of a marketplace platform. Each entity and its attributes were carefully selected to reflect real-world concepts such as users, creators, creators social profiles, companies, etc. Below is an intuitive justification for the key design decisions:
 \begin{itemize}
-    \item \textbf{USER}: Represents individual users of the platform. Attributes like id, name, email,  password\_validation, a flag is\_email\_confirmed, and a timestamp created\_at. This structure supports user authentication, account management, and email verification processes.
+    \item \textbf{USERS}: Represents individual users of the platform. Attributes like id, name, email,  password\_validation, a flag is\_email\_confirmed, and a timestamp created\_at. This structure supports user authentication, account management, and email verification processes.
 
-    \item \textbf{Social Platforms}: A table to store information about different social media platforms. It works as a source of truth for social media integration. Here are only the social networks we currently support, but it can be easily extended in the future if we want to add more.
+    \item \textbf{SOCIAL\_PLATFORMS}: A table to store information about different social media platforms. It works as a source of truth for social media integration. Here are only the social networks we currently support, but it can be easily extended in the future if we want to add more.
 
     \item \textbf{TOKEN}: Stores session or login tokens for users. Includes created\_at and last\_used\_at to support expiration and activity tracking, promoting secure authentication.
 
-    \item \textbf{CREATOR}: Represents content creators on the platform. It includes a foreign key (that for business logic was chosen to be the PK as well) to the USER table, linking each creator to a user account. Here we also store the creator's name, description, and profile picture URL (In the future), is is\_verified flag to indicate if the creator has been verified by the platform, availability\_status, a global\_rating (as a source of reputation), and other statistics for interaction management.
+    \item \textbf{CREATORS}: Represents content creators on the platform. It includes a foreign key (that for business logic was chosen to be the PK as well) to the USER table, linking each creator to a user account. Here we also store the creator's name, description, and profile picture URL (In the future), is is\_verified flag to indicate if the creator has been verified by the platform, availability\_status, a global\_rating (as a source of reputation), and other statistics for interaction management.
 
-    \item \textbf{COMPANY}: Represents companies and business entities on the platform. Similarly to the CREATOR entity, it utilizes a foreign key to the USER table as its primary key (PK) to maintain a one-to-one relationship with the user account, ensuring data integrity via a cascade delete policy. This table stores essential business information, including the \texttt{company\_name}, an \texttt{is\_verified} status flag, a \texttt{description}, the \texttt{company\_size}, the \texttt{website\_link}, and the \texttt{country\_headquarters}, providing a comprehensive profile for companies seeking marketing partnerships.
+    \item \textbf{COMPANIES}: Represents companies and business entities on the platform. Similarly to the CREATOR entity, it utilizes a foreign key to the USER table as its primary key (PK) to maintain a one-to-one relationship with the user account, ensuring data integrity via a cascade delete policy. This table stores essential business information, including the \texttt{company\_name}, an \texttt{is\_verified} status flag, a \texttt{description}, the \texttt{company\_size}, the \texttt{website\_link}, and the \texttt{country\_headquarters}, providing a comprehensive profile for companies seeking marketing partnerships.
 
-    \item \textbf{Sectors}: A table to store information about different market sectors. It works as a source of truth for companies and creators sectors. Here are only the market sectors we currently support, but it can be easily extended in the future if we want to add more.
+    \item \textbf{SECTORS}: A table to store information about different market sectors. It works as a source of truth for companies and creators sectors. Here are only the market sectors we currently support, but it can be easily extended in the future if we want to add more.
 
     \item \textbf{COMPANY\_SECTORS}: Acts as an associative table to implement a many-to-many relationship between the \texttt{COMPANY} and \texttt{SECTOR} entities. By using a composite primary key consisting of \texttt{company\_user\_id} and \texttt{sector\_id}, it enables companies to be associated with multiple business sectors, facilitating granular filtering and discovery within the marketplace.
 
@@ -70,19 +70,19 @@ The relational model was designed to support the functional and structural needs
 \end{itemize}
 
 \section{Database Functions and Recommendation Engine}
-To ensure the high performance of our platform and minimize data transfer latency, we implemented a custom recommendation engine directly within the database layer. By offloading complex scoring algorithms to PostgreSQL, we ensure that ranking calculations are performed at the data source, returning only the most relevant, pre-scored entities. This approach leverages the engine's ability to process large datasets efficiently, moving away from traditional, resource-heavy API-side filtering.
+\paragraph{}To ensure the high performance of our platform and minimize data transfer latency, we implemented a custom recommendation engine directly within the database layer. By offloading complex scoring algorithms to PostgreSQL, we ensure that ranking calculations are performed at the data source, returning only the most relevant, pre-scored entities. This approach leverages the engine's ability to process large datasets efficiently, moving away from traditional, resource-heavy API-side filtering.
 
 \subsection{Company Recommendation Algorithm}
-The \texttt{get\_recommended\_companies} function implements a weighted multi-factor scoring algorithm to match companies with potential partners. It receives a user's interest profile as a \texttt{JSONB} object, allowing for dynamic, schema-less input. The \texttt{recommendation\_score} is derived from an additive model that applies specific weights to three distinct dimensions:
+\paragraph{}The \texttt{get\_recommended\_companies} function implements a weighted multi-factor scoring algorithm to match companies with potential partners. It receives a user's interest profile as a \texttt{JSONB} object, allowing for dynamic, schema-less input. The \texttt{recommendation\_score} is derived from an additive model that applies specific weights to three distinct dimensions:
 \begin{itemize}
 \item \textbf{Sector Affinity (Weight 10x)}: Analyzes sector alignment between user interests and company expertise.
 \item \textbf{Geographic Alignment (Weight 5x)}: Prioritizes companies based on the user's preferred country headquarters.
 \item \textbf{Scale Compatibility (Weight 2x)}: Adjusts relevance based on the size of the business entity.
 \end{itemize}
-By multiplying these inputs by predefined coefficients, the algorithm produces a prioritized ranking. Furthermore, it ensures a "fresh feed" by dynamically excluding previously viewed entities via a cross-reference with the \texttt{profile\_views\_history} table.
+\paragraph{}By multiplying these inputs by predefined coefficients, the algorithm produces a prioritized ranking. Furthermore, it ensures a "fresh feed" by dynamically excluding previously viewed entities via a cross-reference with the \texttt{profile\_views\_history} table.
 
 \subsection{Creator Social Profile Recommendation Algorithm}
-The \texttt{get\_recommended\_social\_profiles} function employs a sophisticated, multi-dimensional analysis to rank content creators. Unlike standard filtering, this algorithm computes a \texttt{recommendation\_score} using a nuanced scoring logic:
+\paragraph{}The \texttt{get\_recommended\_social\_profiles} function employs a sophisticated, multi-dimensional analysis to rank content creators. Unlike standard filtering, this algorithm computes a \texttt{recommendation\_score} using a nuanced scoring logic:
 \begin{itemize}
 \item \textbf{Domain Expertise}: High-weight aggregation of matches across creator sectors (\texttt{Weight 100x}).
 \item \textbf{Platform Preference}: Boosts results based on the user's specific social channel focus (\texttt{Weight 10x}).
