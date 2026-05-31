@@ -1,8 +1,8 @@
 \section{Backend Technologies}
-This section outlines the technology stack selected for the backend development, detailing the rationale behind each choice.
+\paragraph{}This section outlines the technology stack selected for the backend development, detailing the rationale behind each choice.
 
 \subsection{ASP.NET Core}
-ASP.NET Core \cite{aspnetcore} is a high-performance, open-source framework engineered for building modern, cloud-based, and cross-platform applications. Serving as the evolution of the traditional ASP.NET framework, it introduces a modular architecture that emphasizes speed, scalability, and developer productivity.
+\paragraph{}ASP.NET Core \cite{aspnetcore} is a high-performance, open-source framework engineered for building modern, cloud-based, and cross-platform applications. Serving as the evolution of the traditional ASP.NET framework, it introduces a modular architecture that emphasizes speed, scalability, and developer productivity.
 
 Our selection of ASP.NET Core was driven by the following factors:
 \begin{itemize}
@@ -13,21 +13,21 @@ Our selection of ASP.NET Core was driven by the following factors:
 \end{itemize}
 
 \subsection{Entity Framework Core}
-Entity Framework Core (EF Core) \cite{entityframeworkcore} is the lightweight and extensible object-relational mapper (ORM) for .NET. It simplifies data access by allowing developers to interact with the underlying database using strongly-typed C\# objects. By abstracting raw SQL queries, EF Core promotes cleaner, maintainable code while providing a robust interface for complex database operations.
+\paragraph{}Entity Framework Core (EF Core) \cite{entityframeworkcore} is the lightweight and extensible object-relational mapper (ORM) for .NET. It simplifies data access by allowing developers to interact with the underlying database using strongly-typed C\# objects. By abstracting raw SQL queries, EF Core promotes cleaner, maintainable code while providing a robust interface for complex database operations.
 
 \subsection{BCrypt.Net-Next}
-BCrypt.Net-Next \cite{bcrypt} is a high-performance security library used for robust password and token hashing. Unlike standard hashing algorithms, BCrypt incorporates a dynamic \textit{salt} mechanism, which adds a unique, random string to each piece of data before the hashing process. This creates a powerful defense against rainbow table attacks and credential exposure.
+\paragraph{}BCrypt.Net-Next \cite{bcrypt} is a high-performance security library used for robust password and token hashing. Unlike standard hashing algorithms, BCrypt incorporates a dynamic \textit{salt} mechanism, which adds a unique, random string to each piece of data before the hashing process. This creates a powerful defense against rainbow table attacks and credential exposure.
 
 In our implementation, we utilize this library to secure both user passwords and sensitive tokens. By enforcing a cost factor, BCrypt ensures that the hashing process is computationally expensive, making it significantly harder for attackers to perform brute-force attempts. This integration is central to our security layer, ensuring that even in the event of a database compromise, all sensitive information remains protected by cryptographic best practices.
 
 
 \subsection{Profanity Detector}
-The Profanity Detector \cite{profanitydetector} is a lightweight utility library integrated into our backend to ensure a family-friendly environment for all users. By maintaining an extensive, pre-defined dictionary of offensive terms, it allows for real-time validation of user-generated content before it is persisted in the database.
+\paragraph{}The Profanity Detector \cite{profanitydetector} is a lightweight utility library integrated into our backend to ensure a family-friendly environment for all users. By maintaining an extensive, pre-defined dictionary of offensive terms, it allows for real-time validation of user-generated content before it is persisted in the database.
 
 In our implementation, this library acts as a content moderation layer, automatically scanning messages and profile information for inappropriate language. This approach shifts the responsibility of content filtering from manual human moderation to an automated system, ensuring that the platform remains professional and compliant with community standards without introducing significant latency to user interactions.
 
 \subsection{Mapster}
-Mapster is a high-performance mapping library specifically designed for .NET ecosystems \cite{mapster}. It offers an optimized solution for object-to-object transformation, effectively eliminating the need for boilerplate mapping logic.
+\paragraph{}Mapster is a high-performance mapping library specifically designed for .NET ecosystems \cite{mapster}. It offers an optimized solution for object-to-object transformation, effectively eliminating the need for boilerplate mapping logic.
 
 We selected Mapster as our primary mapping solution due to its clear technical advantages over alternatives like AutoMapper:
 \begin{itemize}
@@ -53,7 +53,7 @@ Items = success.Items.Adapt<List>(),
 This pattern is consistently applied across every controller in our API, ensuring that our responses remain clean, consistent, and strictly decoupled from the internal domain model structure. While we occasionally use manual LINQ projections for highly specialized data requirements, Mapster serves as our standard approach for the vast majority of data transformations, significantly improving our codebase's maintainability.</List
 
 \subsection{MailKit}
-MailKit is an open-source cross-platform .NET library for SMTP, POP3, and IMAP. It provides a simple way to handle email functionality within .NET applications \cite{mailkit}.
+\paragraph{}MailKit is an open-source cross-platform .NET library for SMTP, POP3, and IMAP. It provides a simple way to handle email functionality within .NET applications \cite{mailkit}.
 
 In our Digital Wallet application, MailKit is important for enhancing security and user verification when a user tries to register on the app it will send a confirmation email to the user's email address. The implementation leverages MailKit's SmtpClient to connect to our email account, authenticate, and send the confirmation code to the user's email address.
 
@@ -61,7 +61,7 @@ This automated email verification system is essential for maintaining the securi
 
 \subsection{XUnit}
 
-XUnit is a widely used testing framework for .NET applications\cite{xunit} providing simplicity and extensibility. Unlike older testing frameworks, XUnit uses attributes instead of base classes, enabling more flexible test organization and execution.
+\paragraph{}XUnit is a widely used testing framework for .NET applications\cite{xunit} providing simplicity and extensibility. Unlike older testing frameworks, XUnit uses attributes instead of base classes, enabling more flexible test organization and execution.
 
 Our testing strategy implemented a multi-layered approach, using the Xunit Fixture pattern\cite{xunitFixture}:
 \begin{itemize}

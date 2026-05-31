@@ -9,7 +9,7 @@
 
 \subsection{Design Principles and Patterns}
 
-To ensure robustness in error management, our API adopts the Problem Details for HTTP APIs standard (RFC 9457) \cite{rfc9457}. This specification allows the backend to communicate errors through structured, consistent responses, replacing ambiguous exceptions with clear, machine-readable diagnostic information.
+\paragraph{}To ensure robustness in error management, our API adopts the Problem Details for HTTP APIs standard (RFC 9457) \cite{rfc9457}. This specification allows the backend to communicate errors through structured, consistent responses, replacing ambiguous exceptions with clear, machine-readable diagnostic information.
 
 The backend is organized into distinct layers to promote maintainability, scalability, and a strict separation of concerns. This modular approach allows for the isolated development and evolution of different system components:
 
@@ -20,41 +20,60 @@ The backend is organized into distinct layers to promote maintainability, scalab
 \end{itemize}
 
 Furthermore, to uphold data consistency and integrity across complex operations, we implemented a \textbf{Transaction Manager}. This component ensures the atomicity of database interactions by grouping multiple operations into a single logical unit. Consequently, all operations within a transaction are committed only if entirely successful; otherwise, the system triggers a rollback, effectively preventing the database from entering an inconsistent state.
+\subsection{Authentication and Authorization Pipeline} \label{subsec:auth_pipeline}
 
-\subsection{Authentication and Authorization Interceptors}
+To enforce strict security boundaries across the Hubly API, most endpoints are protected by a centralized interception mechanism that validates both user authentication and account activation status before any business logic is executed. Specifically, the system mandates that every inbound request to a protected resource must originate from a legitimate, active session belonging to a user who has successfully verified their email address.
 
-To enforce security across our API, most endpoints are protected by an interception mechanism that validates not only user authentication but also the status of their account. Specifically, our system requires that every request originates from an authenticated user who has successfully verified their email address.
+\subsubsection{Pipeline Architecture and Lifecycle Integration}
+This validation process is enforced through a custom action filter, \texttt{RequireAuthenticationAttribute}, which integrates directly into the ASP.NET Core request lifecycle. Working in conjunction with a specialized \texttt{TokenProcessor} service, this filter forms a unified validation and dependency injection pipeline comprised of four distinct phases:
 
-To streamline this, we implemented an \texttt{AuthenticatedUser} class that serves as a specialized parameter in controller actions. When a method signature includes this parameter, our interceptor system automatically triggers, performing a two-fold validation:
 \begin{enumerate}
-\item It verifies the integrity and validity of the authentication token or cookie provided in the request.
-\item It confirms the user’s account status, ensuring that their email address has been verified.
+    \item \textbf{Identity Resolution:} The pipeline acts as a transparent hybrid interface, dynamically retrieving the authentication token from either the HTTP request headers or the application's secure cookies (supporting web clients).
+    \item \textbf{Cryptographic Token Validation:} The \texttt{TokenProcessor} decrypts and evaluates the structural integrity, signature, and expiration date of the extracted token, ensuring that the current session is active and untampered with.
+    \item \textbf{Authorization and Account Status Enforcement:} Beyond validating cryptographic credentials, the pipeline evaluates domain-specific state requirements. It explicitly verifies the user's account status by inspecting the email confirmation status. If the email remains unverified, the pipeline abruptly terminates the execution flow and returns a \texttt{403 Forbidden} error following the RFC 7807 Problem Details specification, preventing unconfirmed accounts from accessing core operations.
+    \item \textbf{Identity Binding and Dependency Injection:} Once authentication and authorization criteria are fully satisfied, the filter instantiates an \texttt{AuthenticatedUser} object containing the user's resolved identity metadata and caches it within \texttt{HttpContext.Items}. To streamline downstream consumption, a custom \texttt{AuthenticatedUserModelBinder} intercepts the controller parameter instantiation, automatically mapping this object directly into method signatures.
 \end{enumerate}
 
-If either validation fails—whether the credentials are invalid or the email remains unconfirmed—the interceptor intercepts the execution flow and returns an appropriate error response following the Problem Details format, preventing the controller logic from ever being reached.
-
-This design offers several architectural advantages:
-\begin{itemize}
-\item \textbf{Centralized Logic}: Authentication and authorization rules are consolidated within a single component, eliminating code duplication across controllers.
-\item \textbf{Separation of Concerns}: Controller actions remain strictly focused on business logic, decoupled from security or identity verification.
-\item \textbf{Declarative Security}: Security requirements are explicitly declared through method signatures, making the codebase easier to audit.
-\item \textbf{Unified Mechanism}: The same interception pipeline transparently supports both token-based (mobile) and cookie-based (web) authentication.
-\end{itemize}
-
-Figure~\ref{fig:interceptor-functioning} illustrates the operational flow of this mechanism. When credentials are valid and the user is verified, the \texttt{AuthenticatedUser} object is populated with the user’s identity, allowing the request to proceed. Otherwise, the request is rejected with a descriptive error response, ensuring the system remains protected.
+Figure~\ref{fig:interceptor-functioning} illustrates the operational topology of this interception mechanism, highlighting the rejection pathways versus the successful controller dispatch.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=10cm]{img/interceptor_functioning.png}
-\caption{Authentication Interceptor Workflow}
+\caption{Authentication Interceptor and Pipeline Workflow}
 \label{fig:interceptor-functioning}
 \end{figure}
 
-This pattern ensures a clean, maintainable, and highly secure boundary between security enforcement and business operations.
+This declarative design offers substantial architectural advantages over traditional ad-hoc verification patterns:
+\begin{itemize}
+    \item \textbf{Centralized Logic:} All identity mapping and state guarding rules are consolidated within a single, cohesive engine, eliminating repetitive cross-cutting authentication code across endpoints.
+    \item \textbf{Separation of Concerns:} Controller actions remain entirely decoupled from identity checks, allowing them to focus exclusively on executing core business rules.
+    \item \textbf{Declarative Security:} Security boundaries are explicitly declared via controller method signatures using the \texttt{AuthenticatedUser} parameter. This self-documenting pattern greatly improves readability and simplifies architectural security audits.
+\end{itemize}
 
+
+\subsubsection{Cookie Configuration and Session Security}
+\paragraph{}For web-based client applications, session persistence is managed using strict cookie policies to prevent token theft. Listing~\ref{lst:login-response} highlights the programmatic configuration applied when appending the session cookie to the outbound HTTP response:
+
+\begin{lstlisting}[caption={Authentication Cookie Configuration}, label={lst:login-response}]
+var cookieOptions = new CookieOptions
+{
+    HttpOnly = true,
+    Secure = false, // Must be configured as true in production environments
+    SameSite = SameSiteMode.Strict,
+    Expires = DateTime.Now.AddDays(7)
+};
+Response.Cookies.Append("token", tokenValue, cookieOptions);
+\end{lstlisting}
+
+This setup follows industry-standard security baselines to safeguard tokens at rest within the user's browser:
+\begin{itemize}
+    \item \textbf{\texttt{HttpOnly}:} Prevents client-side scripts from accessing the cookie value via \texttt{document.cookie}, creating a robust defense mechanism against Cross-Site Scripting (XSS) attacks.
+    \item \textbf{\texttt{SameSite (Strict)}:} Restricts the browser from sending the cookie along with cross-site requests, mitigating Cross-Site Request Forgery (CSRF) attempts by ensuring the payload is only transmitted on requests originating natively from the application's domain.
+    \item \textbf{Persistence Policy:} Establishes a 7-day expiration boundary, balancing user convenience with session lifecycle security.
+\end{itemize}
 \subsection{Error Handling Middleware}
 
-A cornerstone of our error management strategy is the global error-handling middleware, which serves as a protective layer between the core application logic and the client-side response. This component is designed to ensure that unexpected faults are captured and communicated in a standardized, predictable manner.
+\paragraph{}A cornerstone of our error management strategy is the global error-handling middleware, which serves as a protective layer between the core application logic and the client-side response. This component is designed to ensure that unexpected faults are captured and communicated in a standardized, predictable manner.
 
 \begin{lstlisting}[caption={Error Handling Middleware Implementation}, label={lst:error-handling-middleware}]
 private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
@@ -83,7 +102,7 @@ Technically, the implementation enforces a 500 Internal Server Error status code
 
 \subsection{Email Service}
 
-The system incorporates a dedicated email service primarily to orchestrate user identity verification. By requiring users to validate their registration via a unique verification code, we significantly enhance platform security and ensure that all accounts are linked to accessible, legitimate email addresses.
+\paragraph{}The system incorporates a dedicated email service primarily to orchestrate user identity verification. By requiring users to validate their registration via a unique verification code, we significantly enhance platform security and ensure that all accounts are linked to accessible, legitimate email addresses.
 
 The verification workflow operates as follows:
 \begin{itemize}
@@ -102,40 +121,3 @@ Figure~\ref{fig:email-service-structure} illustrates the internal architecture o
 \end{figure}
 
 By maintaining this structured approach to identity verification, the email service serves as a cornerstone for maintaining a clean and trustworthy user base within the application ecosystem.
-
-\subsection{Authentication Pipeline}
-
-To ensure that only authorized users can access protected resources, we implemented a robust authentication pipeline. This mechanism is responsible for validating user credentials and account status before any business logic is executed within the controller actions.
-
-Architecture of the Authentication Pipeline
-The authentication process is enforced through a custom filter, RequireAuthenticationAttribute, which integrates into the ASP.NET Core request lifecycle. This attribute works in conjunction with a TokenProcessor service, forming a centralized validation pipeline:
-
-\begin{enumerate}
-\item \textbf{Identity Resolution}: The pipeline retrieves the authentication token either from the request headers or the application cookies.
-\item \textbf{Token Validation and Identity Mapping}: The TokenProcessor validates the token and resolves the user's identity, ensuring that the session is active and legitimate.
-\item \textbf{Authorization and Account Status Check}: Beyond verifying the token, the pipeline explicitly checks the \texttt{IsEmailConfirmed} flag. If the account is not verified, the system terminates the request and returns a \texttt{403 Forbidden} status, mandating email confirmation to proceed.
-\item \textbf{Dependency Injection}: Once the user is authenticated and verified, the pipeline populates the \texttt{HttpContext.Items} with an \texttt{AuthenticatedUser} object. This object is then automatically injected into controller actions via a custom AuthenticatedUserModelBinder, allowing for clean and declarative parameter access.
-\end{enumerate}
-
-Cookie Configuration and Security
-For web-based interactions, the application utilizes secure cookie-based session management. Listing~\ref{lst:login-response} illustrates the configuration used to persist the authentication session:
-
-\begin{lstlisting}[caption={Authentication Cookie Configuration}, label={lst:login-response}]
-var cookieOptions = new CookieOptions
-{
-HttpOnly = true,
-Secure = false, // Must be true in production
-SameSite = SameSiteMode.Strict,
-Expires = DateTime.Now.AddDays(7)
-};
-Response.Cookies.Append("token", tokenValue, cookieOptions);
-\end{lstlisting}
-
-This configuration adheres to security best practices:
-\begin{itemize}
-\item \textbf{HttpOnly}: Renders the cookie inaccessible to client-side scripts, effectively preventing Cross-Site Scripting (XSS) attacks.
-\item \textbf{SameSite (Strict)}: Instructs the browser to only send the cookie with requests originating from our domain, providing a robust defense against Cross-Site Request Forgery (CSRF).
-\item \textbf{Expiration Policy}: Sets a persistent 7-day session, which is dynamically maintained and refreshed upon valid user interaction.
-\end{itemize}
-
-By decoupling security validation from business logic through this custom pipeline, we ensure that authentication requirements are explicitly declared via method signatures, resulting in a cleaner, more secure, and highly maintainable codebase.
