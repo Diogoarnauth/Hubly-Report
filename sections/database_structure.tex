@@ -63,9 +63,9 @@ The relational model was designed to support the functional and structural needs
 
     \item \textbf{MESSAGE\_READ\_STATUS}: Manages individual delivery receipts and read state. By mapping each \texttt{user\_id} to the \texttt{last\_read\_message\_id} within a specific conversation, it enables granular tracking of message progression, ensuring that participants can identify which communications are still pending review.
 
-    \item \textbf{CONVERSATION\_TAGS}: Allows users to create custom categorization labels for their communication chats. Each tag is owned by a specific \texttt{user\_id} and defined by a name and a \texttt{color\_hex}, enabling a personalized CRM experience. The \texttt{unique\_user\_tag\_name} constraint ensures that users do not define duplicate tags within their own workspace.
+    \item \textbf{CONVERSATION\_TAGS}: Allows users to create custom categorization labels for their communication chats. Each tag is owned by a specific \texttt{user\_id} and defined by a name and a \texttt{color\_hex}, enabling a personalized tag experience. The \texttt{unique\_user\_tag\_name} constraint ensures that users do not define duplicate tags within their own workspace.
 
-    \item \textbf{CONVERSATION\_TAG\_ASSIGNMENTS}: Implements the association between a conversation and the tags assigned by a specific user. The composite primary key ensures that each conversation-tag assignment is unique per user, while \texttt{updated\_at} provides the necessary audit trail for tag modifications within the CRM workflow.
+    \item \textbf{CONVERSATION\_TAG\_ASSIGNMENTS}: Implements the association between a conversation and the tags assigned by a specific user. The composite primary key ensures that each conversation-tag assignment is unique per user, while \texttt{updated\_at} provides the necessary audit trail for tag modifications.
 
 \end{itemize}
 

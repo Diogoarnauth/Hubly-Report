@@ -1,0 +1,45 @@
+\chapter{System requirements}\label{ch:system_requirements}
+
+\section{Functional Requirements}
+\paragraph{}This section outlines the core functional requirements of the application, which focuses on connection, discovery, and communication management between companies and digital creators. The following entities define the system's core functionality:
+
+\begin{itemize}
+    \item \textbf{User Registration:} Users must complete a comprehensive registration process that includes providing accurate personal information.
+    \begin{itemize}   
+        \item \textbf{User:} An individual who accesses and uses the platform. Users can register, log in, and manage their authentication credentials. Since this application is private and secure, access is strictly restricted to authenticated users with a verified email address. After the initial registration, a user must establish their identity as either a \emph{Creator} or a \emph{Company}.    
+        
+        \item \textbf{Creator:} A user type representing content creators or influencers. A creator profile includes an artistic name, verification status, availability status, algorithmic global rating based on reviews, statistics about chats, and historical response metrics. Each creator can register and manage multiple individual \emph{Social Profiles} across different platforms.
+        
+        \begin{itemize}
+        
+            \item \textbf{Social Profile:} A granular, platform-specific representation of a creator's presence (e.g., YouTube, Instagram, TikTok). Each profile is linked to a specific platform, public username, direct link, and target audience metrics (such as follower count). It also defines customized commercial constraints, including minimum and maximum pricing tiers, and is classified under specific content sectors.
+        
+        \end{itemize}
+        
+        \item \textbf{Company:} A user type representing brands, agencies, or startups looking for marketing partnerships. A company profile contains the legal or commercial name, description, corporate size, website link, and country of headquarters. Like creators, companies map their operations to specific industry sectors.
+    
+    \end{itemize}
+
+    \item \textbf{Email Confirmation:} Users must confirm their email address during the registration process to ensure the validity of their contact information.
+
+    \item \textbf{Sector:} A classification system used to group both company operations and creator social profiles into specific market niches (e.g., Finance, Tech, Fashion, Gaming). This shared taxonomy enables accurate, cross-referenced discovery and high-compatibility matches during searches.
+    
+    \item \textbf{Rating System:} A feedback mechanism that allows companies and creators to rate digital creators based on previous interactions or partnership experiences. These ratings provide insights into a creator's reliability, professionalism, communication quality, and overall performance. This system contributes to the platform's transparency and helps users make informed decisions when selecting creators for future collaborations.
+    
+    \item \textbf{Verification System:} A process that allows users to verify their identity and authenticity on the platform. This system enhances trust and credibility by confirming that users are who they claim to be, which is particularly important for creators seeking partnerships with companies. Verified users may receive a special badge or status on their profiles, signaling their legitimacy to potential partners.
+
+    \item \textbf{Search Engine:} An advanced, multi-criteria discovery mechanism allowing targeted, paginated queries. The engine processes inputs distinctly based on the target entity data models:
+    \begin{itemize}
+        \item \textbf{Creator Search:} Utilizes a paginated model (\emph{CreatorSearchInputModel}) to filter profiles by platform identification (\texttt{PlatformId}), username keywords (\texttt{PlatformUserName}), specific follower brackets (\texttt{FollowersCountMin} and \texttt{FollowersCountMax}), pricing budget constraints (\texttt{PriceMin} and \texttt{PriceMax}), matching sector tags (\texttt{Sectors}), and dynamic page size control (\texttt{Page} and \texttt{PageSize}).
+        \item \textbf{Company Search:} Utilizes a paginated model (\emph{CompanySearchInputModel}) to filter corporate entities by corporate name keywords (\texttt{Name}), a list of associated business sectors (\texttt{Sectors}), workforce size categories (\texttt{CompanySize}), countries of headquarters (\texttt{Countries}), and dynamic page size control (\texttt{Page} and \texttt{PageSize}).
+    \end{itemize}
+    
+    \item \textbf{Conversation \& Messaging:} A secure internal chat architecture initiated directly by a company or a creator's specific \emph{Social Profile} rather than a generic user account. This structure ensures context-specific negotiations. The chat system logs real-time messages, tracks message read status metrics per participant, and supports message editing and deletion.
+    
+    \item \textbf{Private Tag System:} A productivity management tool that allows users to independently organize their active conversations. Users can create custom workflow tags with designated names and hexadecimal colors. These tags can be secretly assigned to conversations to track private negotiation statuses (e.g., \emph{Contacted}, \emph{Negotiation}, \emph{Accepted}, \emph{Rejected}) without the counterparty's knowledge, directly mitigating outreach confusion.
+    
+    \item \textbf{Profile Views History:} An analytical tracking mechanism that logs whenever an authenticated user views a company profile or a creator's specific social profile, providing critical transparency metrics regarding platform exposure and interest trends.
+
+    \item \textbf{Recommendation Engine:} An intelligent system that analyzes user behavior, preferences, and interactions to provide personalized suggestions for companies and creators, enhancing the overall user experience and facilitating more effective partnerships.
+
+\end{itemize}

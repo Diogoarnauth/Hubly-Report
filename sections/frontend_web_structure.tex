@@ -17,7 +17,7 @@
 \section{Components Architecture}
 \paragraph{}Components form the structural foundation of our frontend. By designing them to be highly decoupled from specific pages, we ensure maximum reusability and maintainability across the entire application.
 
-We adopted a modular approach for the \texttt{components} folder to improve code maintainability. General-purpose elements that appear across multiple views—such as buttons and form inputs—are centralized in the \texttt{ui} subdirectory. Utilizing the \texttt{shadcn/ui} library for these shared components allowed us to enforce a standardized and cohesive user interface.
+We adopted a modular approach for the \texttt{components} folder to improve code maintainability. General-purpose elements that appear across multiple views, such as buttons and form inputs, are centralized in the \texttt{ui} subdirectory. Utilizing the \texttt{shadcn/ui} library for these shared components allowed us to enforce a standardized and cohesive user interface.
 
 Conversely, components that are tailored to a specific feature are grouped into dedicated, context-specific folders. For instance, the \texttt{chat} and \texttt{search} directories house specialized components such as \texttt{ChatDashboard} and \texttt{CreatorSearch}, ensuring that domain-specific logic remains neatly compartmentalized and easy to locate.
 \section{Global State and Contexts} \label{sec:contexts_web}
@@ -69,7 +69,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 \end{lstlisting}
 
-We deliberately choose this React Query and Context combination over traditional global state managers like Redux. While Redux is powerful for complex client-side interactions, our primary requirement was server-state synchronization. React Query handles caching, background re-fetching, and memory management out-of-the-box, significantly reducing boilerplate code while massively improving the performance of our global UI components.
 \subsection{Components Interaction}
 \paragraph{}Our frontend design strictly follows React's unidirectional data flow to coordinate behaviors between complex view structures. Instead of letting deeply nested views manage isolated instances of data, a master parent component encapsulates the primary state and orchestrates its sub-components using specialized properties (\texttt{props}) and event callbacks.
 
@@ -155,7 +154,7 @@ This architecture offers major benefits over standard inline fetch approaches. I
 \section{Contexts} \label{sec:contexts_web}
 \paragraph{}In modern web applications, particularly those utilizing meta-frameworks like Next.js that blend server-side rendering with client-side hydration, sharing reactive state across deeply nested components can become complex. In the React ecosystem, contexts are used to share data and state between components without the need to pass props through the entire component tree (\textit{prop-drilling}). In our implementation, we strategically leverage React's Context API to manage global state, handle identity validation, and, most importantly, provide a unified real-time infrastructure through the \texttt{SignalRContext}.
 
-The \texttt{SignalRContext} acts as a shared, persistent architectural foundation for the entire messaging ecosystem of Hubly. Instead of forcing separate views—such as the conversation list sidebar and the active chat viewport—to open independent network connections, this context instantiates and maintains a single, global bi-directional WebSocket connection with our backend event hub (\texttt{/api/hubly-events}). 
+The \texttt{SignalRContext} acts as a shared, persistent architectural foundation for the entire messaging ecosystem of Hubly. Instead of forcing separate views, such as the conversation list sidebar and the active chat viewport, to open independent network connections, this context instantiates and maintains a single, global bi-directional WebSocket connection with our backend event hub (\texttt{/api/hubly-events}). 
 
 We treat this context as a centralized connection manager implementing a Singleton-like behavior. This approach optimizes client and server resources by avoiding redundant handshakes, ensuring that whenever a user navigates between chat modules, the underlying stream remains active, synchronized, and ready to intercept server-driven events.
 

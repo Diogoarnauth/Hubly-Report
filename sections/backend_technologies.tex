@@ -8,7 +8,7 @@ Our selection of ASP.NET Core was driven by the following factors:
 \begin{itemize}
 \item \textbf{Skill Acquisition}: We identified this framework as an ideal opportunity to expand our technical repertoire. Although not part of our formal curriculum, its widespread industry adoption presented a compelling challenge for professional growth.
 \item \textbf{Career Alignment}: Given its significant market share within enterprise environments, mastering the Microsoft ecosystem provides a strategic advantage for our future career prospects.
-\item \textbf{High-Performance Runtime}: The framework's lightweight, modular design ensures optimal execution speed, which is a critical requirement for a responsive digital wallet application.
+\item \textbf{High-Performance Runtime}: The framework's lightweight, modular design ensures optimal execution speed.
 \item \textbf{Cross-Platform Versatility}: Its ability to operate seamlessly across Windows, Linux, and macOS offers us the deployment flexibility necessary for diverse infrastructure requirements.
 \end{itemize}
 
@@ -55,7 +55,7 @@ This pattern is consistently applied across every controller in our API, ensurin
 \subsection{MailKit}
 \paragraph{}MailKit is an open-source cross-platform .NET library for SMTP, POP3, and IMAP. It provides a simple way to handle email functionality within .NET applications \cite{mailkit}.
 
-In our Digital Wallet application, MailKit is important for enhancing security and user verification when a user tries to register on the app it will send a confirmation email to the user's email address. The implementation leverages MailKit's SmtpClient to connect to our email account, authenticate, and send the confirmation code to the user's email address.
+In our Hubly application, MailKit is important for enhancing security and user verification when a user tries to register on the app it will send a confirmation email to the user's email address. The implementation leverages MailKit's SmtpClient to connect to our email account, authenticate, and send the confirmation code to the user's email address.
 
 This automated email verification system is essential for maintaining the security of our application, preventing fraudulent accounts, and ensuring that all users have valid contact information in the system.
 

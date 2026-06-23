@@ -19,7 +19,7 @@ The backend is organized into distinct layers to promote maintainability, scalab
 \item \textbf{Repositories}: Define the data access layer, abstracting database interactions and shielding the business logic from persistence-specific details.
 \end{itemize}
 
-Furthermore, to uphold data consistency and integrity across complex operations, we implemented a \textbf{Transaction Manager}. This component ensures the atomicity of database interactions by grouping multiple operations into a single logical unit. Consequently, all operations within a transaction are committed only if entirely successful; otherwise, the system triggers a rollback, effectively preventing the database from entering an inconsistent state.
+Furthermore, to uphold data consistency and integrity across complex operations, we implemented a \textbf{Transaction Manager}. This component ensures the atomicity of database interactions by grouping multiple operations into a single logical unit. Consequently, all operations within a transaction are committed only if entirely successful, otherwise, the system triggers a rollback, effectively preventing the database from entering an inconsistent state.
 \subsection{Authentication and Authorization Pipeline} \label{subsec:auth_pipeline}
 
 \paragraph{}To enforce strict security boundaries across the Hubly API, most endpoints are protected by a centralized interception mechanism that validates both user authentication and account activation status before any business logic is executed. Specifically, the system mandates that every inbound request to a protected resource must originate from a legitimate, active session belonging to a user who has successfully verified their email address.
@@ -106,7 +106,7 @@ Technically, the implementation enforces a 500 Internal Server Error status code
 
 The verification workflow operates as follows:
 \begin{itemize}
-\item \textbf{Token Generation}: Upon registration, the system automatically generates a unique, time-sensitive verification code.
+\item \textbf{Code Generation}: Upon registration, the system automatically generates a unique, time-sensitive verification code.
 \item \textbf{Secure Dispatch}: The email service transmits this code to the user's provided email address.
 \item \textbf{Identity Confirmation}: The user is required to input the received code within the application to finalize the account activation process.
 \end{itemize}

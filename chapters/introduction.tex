@@ -1,63 +1,56 @@
 \chapter{Introduction}
 
-\paragraph{}Due to the extreme growth of social networks and the necessity for businesses to maintain a strong digital presence, combined with the importance for influencers and content creators to effectively monetize their audience through multiple platforms, managing partnerships has become highly complex. Currently, most of these collaborations involve a high fragmentation of communication channels, scattering interactions across \textit{Instagram DMs}, \textit{WhatsApp}, \textit{Google Forms}, \textit{Gmail}, and \textit{Telegram}\dots Reaching out to content creators has consequently become a chaotic process, making it incredibly difficult for startups and brands to track and organize marketing partnerships. This difficulty in finding direct contact methods and maintaining control over negotiation statuses was the primary motivation behind the development of the Hubly project.
+\paragraph{}This report presents the design and implementation of Hubbly, a web application,
+developed as part of the course \textit{Project and Seminar}. The project was undertaken by a team
+of two students, with the goal of creating a platform that connects influencers with businesses, 
+enabling seamless partnerships and collaborations.
 
-The Hubly project aims to develop an easy-to-use and intuitive marketplace application that allows users to maintain full control over their influencer marketing campaigns, promoting structured business workflows and improving partnership organization, while simultaneously helping them find the best match to work with. In the context of this application, a creator is not treated as a single entity, instead, the platform operates through social profiles, which act as granular extensions where the user can manage campaigns based on specific metrics like follower counts, custom sectors, and pricing. Multiple users, such as distinct brands or individual creators, can discover each other and establish direct communication channels within a dedicated, professional networking environment.
+\section{Context}
 
-\section{Functional Requirements}
-\paragraph{}This section outlines the core functional requirements of the application, which focuses on connection, discovery, and communication management between companies and digital creators. The following entities define the system's core functionality:
+\paragraph{}The motivation for this project emerged from a previous independent web application developed by the authors, focused on providing information about topics related to the financial and crypto markets. During that project, the need to promote the application and increase its visibility led to the search for digital content creators who could communicate with audiences interested in those topics. This process revealed several practical difficulties. Identifying suitable creators required comparing multiple factors, such as the creator’s platform, audience size, content area, availability and commercial conditions. In addition, contacting several creators simultaneously resulted in communication being spread across different channels, including social networks, email, instant messaging applications and online forms. As a consequence, it became difficult to track the context of each conversation, remember the negotiation stage of each contact and maintain an organized view of the overall outreach process. This experience highlighted a problem in influencer partnerships workflows, the absence of a centralized system that supports the discovery, communication and tracking of the stage of the outgoing conversation between companies and digital creators. 
+Hubly was therefore proposed as a system designed to address this type of fragmentation. The project focuses on creating a centralized environment where companies and creators can represent their profiles, search for relevant contacts and manage communication in a more structured way.
 
-\begin{itemize}
-    \item \textbf{User Registration:} Users must complete a comprehensive registration process that includes providing accurate personal information.
-    \begin{itemize}   
-        \item \textbf{User:} An individual who accesses and uses the platform. Users can register, log in, and manage their authentication credentials. Since this application is private and secure, access is strictly restricted to authenticated users with a verified email address. After the initial registration, a user must establish their identity as either a \emph{Creator} or a \emph{Company}.    
-        
-        \item \textbf{Creator:} A user type representing content creators or influencers. A creator profile includes an artistic name, verification status, availability status, algorithmic global rating based on reviews, statistics about chats, and historical response metrics. Each creator can register and manage multiple individual \emph{Social Profiles} across different platforms.
-        
-        \begin{itemize}
-        
-            \item \textbf{Social Profile:} A granular, platform-specific representation of a creator's presence (e.g., YouTube, Instagram, TikTok). Each profile is linked to a specific platform, public username, direct link, and target audience metrics (such as follower count). It also defines customized commercial constraints, including minimum and maximum pricing tiers, and is classified under specific content sectors.
-        
-        \end{itemize}
-        
-        \item \textbf{Company:} A user type representing brands, agencies, or startups looking for marketing partnerships. A company profile contains the legal or commercial name, description, corporate size, website link, and country of headquarters. Like creators, companies map their operations to specific industry sectors. By operating as a company, users gain the advantage of having their history tracked and processed to customize the application experience through tailored ecosystem recommendations.
-    
-    \end{itemize}
+\section{Solution}
+\paragraph{}Hubly is a web application where creators and companies (big and small business) can authenticated freely and centralize the main stages involved in partnerships. The system provides a common environment where users can represent themselves as either companies or creators, search for relevant profiles, initiate conversations and organize the state of potential collaborations.
 
-    \item \textbf{Email Confirmation:} Users must confirm their email address during the registration process to ensure the validity of their contact information.
+A central aspect of the solution is the distinction between a creator and the creator’s social profiles. In the context of this project, a creator is not represented only as a single generic profile. Instead, a creator may have multiple platform-specific social profiles, each corresponding to a different social media presence, such as Instagram, YouTube or TikTok. This modelling decision is relevant because the same creator may have different audience sizes, content sectors and commercial conditions depending on the platform Figure \ref{fig:solution} illustrates this conceptual structure.
 
-    \item \textbf{Sector:} A classification system used to group both company operations and creator social profiles into specific market niches (e.g., Finance, Tech, Fashion, Gaming). This shared taxonomy enables accurate, cross-referenced discovery and high-compatibility matches during searches.
-    
-    \item \textbf{Rating System:} A feedback mechanism that allows companies and creators to rate digital creators based on previous interactions or partnership experiences. These ratings provide insights into a creator's reliability, professionalism, communication quality, and overall performance. This system contributes to the platform's transparency and helps users make informed decisions when selecting creators for future collaborations.
-    
-    \item \textbf{Verification System:} A process that allows users to verify their identity and authenticity on the platform. This system enhances trust and credibility by confirming that users are who they claim to be, which is particularly important for creators seeking partnerships with companies. Verified users may receive a special badge or status on their profiles, signaling their legitimacy to potential partners.
+Companies are represented through company profiles containing information relevant to discovery and contact. Creators, on the other hand, can organize their activity through one or more social profiles. Based on these entities, Hubly supports filtered search, allowing companies and creators to discover potential partners according to criteria such as sector, platform, audience size, price range, company size and country.
 
-    \item \textbf{Search Engine:} An advanced, multi-criteria discovery mechanism allowing targeted, paginated queries. The engine processes inputs distinctly based on the target entity data models:
-    \begin{itemize}
-        \item \textbf{Creator Search:} Utilizes a paginated model (\emph{CreatorSearchInputModel}) to filter profiles by platform identification (\texttt{PlatformId}), username keywords (\texttt{PlatformUserName}), specific follower brackets (\texttt{FollowersCountMin} and \texttt{FollowersCountMax}), pricing budget constraints (\texttt{PriceMin} and \texttt{PriceMax}), matching sector tags (\texttt{Sectors}), and dynamic page size control (\texttt{Page} and \texttt{PageSize}).
-        \item \textbf{Company Search:} Utilizes a paginated model (\emph{CompanySearchInputModel}) to filter corporate entities by corporate name keywords (\texttt{Name}), a list of associated business sectors (\texttt{Sectors}), workforce size categories (\texttt{CompanySize}), countries of headquarters (\texttt{Countries}), and dynamic page size control (\texttt{Page} and \texttt{PageSize}).
-    \end{itemize}
-    
-    \item \textbf{Conversation \& Messaging:} A secure internal chat architecture initiated directly between a company and a creator's specific \emph{Social Profile} rather than a generic user account. This structure ensures context-specific negotiations. The chat system logs real-time messages, tracks message read status metrics per participant, and supports message editing and deletion.
-    
-    \item \textbf{Private Tag System:} A productivity management tool that allows users to independently organize their active conversations. Users can create custom workflow tags with designated names and hexadecimal colors. These tags can be secretly assigned to conversations to track private negotiation statuses (e.g., \emph{Contacted}, \emph{Negotiation}, \emph{Accepted}, \emph{Rejected}) without the counterparty's knowledge, directly mitigating outreach confusion.
-    
-    \item \textbf{Profile Views History:} An analytical tracking mechanism that logs whenever an authenticated user views a company profile or a creator's specific social profile, providing critical transparency metrics regarding platform exposure and interest trends.
+The solution also includes internal conversations associated with company or creator social profile. This allows communication to remain connected to the specific context of a possible partnership, instead of being distributed across external channels, and in the messaging to support the management of several simultaneous contacts, the system provides private conversation tags, allowing each user to classify conversations according to their own workflow. In addition, Hubly includes profile-view history, creator ratings, availability status, verified accounts and recommendations based on previous users search.
 
-    \item \textbf{Recommendation Engine:} An intelligent system that analyzes user behavior, preferences, and interactions to provide personalized suggestions for companies and creators, enhancing the overall user experience and facilitating more effective partnerships.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{img/esquema_simples_dominio.png}
+    \caption{Representation of users, companies, creators and creator social profiles}
+    \label{fig:solution}
+\end{figure}
 
-\end{itemize}
+\section{Typical Use Case}
+Hubly can be used in different scenarios involving companies and digital content creators. A possible use case is as follows:
+\begin{enumerate}
+    \item A creator registers in the system and creates one or more social profiles, each associated with a specific platform, such as Instagram, YouTube or TikTok.
+    \item A company registers in the system and creates its company profile, including information such as its sectors, company size and country headquarters.
+    \item The company searches for creator social profiles using filters such as platform, sector, audience size and price range.
+    \item The company selects a creator social profile and initiates an internal conversation.
+    \item During the negotiation process, each user can assign private tags to the conversation, according to their own workflow.
+    \item The system stores profile views, which may later be used to support recommendations.
+    \item After an interaction or collaboration, users may rate creators, contributing to the reputation information available in the system.
+\end{enumerate}
+
  
 
 \section{Report Structure}
 
 \paragraph{}This report is organized into the following chapters:
 
+Chapter \textbf{\ref{ch:system_requirements}} details the functional and non-functional requirements of the Hubly system, outlining what must achieve.
+
 Chapter \textbf{\ref{ch:similar_systems}} explores the strengths and shortcomings of similar systems and influencer marketplaces currently available on the market.
 
 Chapter \textbf{\ref{ch:architecture}} presents the overall design and structure of the Hubly project, describing its main components, the interaction between different layers, and how the web interfaces connect with the backend API and the central entities of companies and creators. Here we also talk about the technologies used and the reasons for their choice.
 
-Chapter \textbf{\ref{ch:backend}} focuses on the backend component of the project, explaining its architecture, routing mechanisms, and the implementation details of key functionalities such as messaging pipelines and DTO processing.
+Chapter \textbf{\ref{ch:backend}} focuses on the backend component of the project, explaining its architecture, routing mechanisms, and the implementation details of key functionalities such as messaging pipelines.
 
 Chapter \textbf{\ref{ch:database}} focuses on the database component of the project, explaining its relational schema definitions, constraints, and the implementation details of data persistence.
 
