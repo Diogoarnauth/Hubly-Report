@@ -11,7 +11,7 @@
 
 \paragraph{}To ensure robustness in error management, our API adopts the Problem Details for HTTP APIs standard (RFC 9457) \cite{rfc9457}. This specification allows the backend to communicate errors through structured, consistent responses, replacing ambiguous exceptions with clear, machine-readable diagnostic information.
 
-The backend is organized into distinct layers to promote maintainability, scalability, and a strict separation of concerns. This modular approach allows for the isolated development and evolution of different system components:
+The backend is organized into distinct layers to separate request handling, business logic and data access. This organization supports maintainability and makes the responsibilities of each component clearer:
 
 \begin{itemize}
 \item \textbf{Controllers}: Act as the entry point, managing incoming HTTP requests and orchestrating the appropriate responses.
@@ -19,19 +19,23 @@ The backend is organized into distinct layers to promote maintainability, scalab
 \item \textbf{Repositories}: Define the data access layer, abstracting database interactions and shielding the business logic from persistence-specific details.
 \end{itemize}
 
-Furthermore, to uphold data consistency and integrity across complex operations, we implemented a \textbf{Transaction Manager}. This component ensures the atomicity of database interactions by grouping multiple operations into a single logical unit. Consequently, all operations within a transaction are committed only if entirely successful, otherwise, the system triggers a rollback, effectively preventing the database from entering an inconsistent state.
+Furthermore, the backend also includes a \textbf{Transaction Manager}, used in operations that require multiple database changes to be handled as a single unit. This component ensures the atomicity of database interactions by grouping multiple operations into a single logical unit. Consequently, all operations within a transaction are committed only if entirely successful, otherwise, the system triggers a rollback, effectively preventing the database from entering an inconsistent state.
 \subsection{Authentication and Authorization Pipeline} \label{subsec:auth_pipeline}
 
 \paragraph{}To enforce strict security boundaries across the Hubly API, most endpoints are protected by a centralized interception mechanism that validates both user authentication and account activation status before any business logic is executed. Specifically, the system mandates that every inbound request to a protected resource must originate from a legitimate, active session belonging to a user who has successfully verified their email address.
 
-\subsubsection{Pipeline Architecture and Lifecycle Integration}
-\paragraph{}This validation process is enforced through a custom action filter, \texttt{RequireAuthenticationAttribute}, which integrates directly into the ASP.NET Core request lifecycle. Working in conjunction with a specialized \texttt{TokenProcessor} service, this filter forms a unified validation and dependency injection pipeline comprised of four distinct phases:
-
+\subsubsection{Pipeline Architecture}
+\paragraph{}The authentication process is implemented through a action filter, \texttt{RequireAuthenticationAttribute}, which is executed during the ASP.NET Core request pipeline. This filter works together with the \texttt{TokenProcessor} service to validate the request and provide the authenticated user information to the controller.
+The process is organized into the following steps:
 \begin{enumerate}
-    \item \textbf{Identity Resolution:} The pipeline acts as a transparent hybrid interface, dynamically retrieving the authentication token from either the HTTP request headers or the application's secure cookies (supporting web clients).
-    \item \textbf{Cryptographic Token Validation:} The \texttt{TokenProcessor} decrypts and evaluates the structural integrity, signature, and expiration date of the extracted token, ensuring that the current session is active and untampered with.
-    \item \textbf{Authorization and Account Status Enforcement:} Beyond validating cryptographic credentials, the pipeline evaluates domain-specific state requirements. It explicitly verifies the user's account status by inspecting the email confirmation status. If the email remains unverified, the pipeline abruptly terminates the execution flow and returns a \texttt{403 Forbidden} error following the RFC 7807 Problem Details specification, preventing unconfirmed accounts from accessing core operations.
-    \item \textbf{Identity Binding and Dependency Injection:} Once authentication and authorization criteria are fully satisfied, the filter instantiates an \texttt{AuthenticatedUser} object containing the user's resolved identity metadata and caches it within \texttt{HttpContext.Items}. To streamline downstream consumption, a custom \texttt{AuthenticatedUserModelBinder} intercepts the controller parameter instantiation, automatically mapping this object directly into method signatures.
+\item \textbf{Token extraction:} The filter obtains the authentication token from the incoming HTTP request. Depending on the client flow, the token may be read from the request headers or from the application cookies.
+
+\item \textbf{Token validation:} The \texttt{TokenProcessor} decrypts and evaluates the structural integrity, signature, and expiration date of the extracted token, ensuring that the current session is active and untampered with.
+
+\item \textbf{Account status validation:} After the token is validated, the filter also verifies domain-specific access conditions. In Hubly, this includes checking whether the user's email address has been confirmed. If the email is not confirmed, the request is rejected with a \texttt{403 Forbidden} response, following the Problem Details response format.
+
+\item \textbf{Authenticated user binding:} When all validation steps succeed, the filter creates an \texttt{AuthenticatedUser} object containing the resolved user identity. This object is stored in \texttt{HttpContext.Items}, making it available during the remaining execution of the request. A custom \texttt{AuthenticatedUserModelBinder} is then used to bind this object directly to controller action parameters when required.
+
 \end{enumerate}
 
 Figure~\ref{fig:interceptor-functioning} illustrates the operational topology of this interception mechanism, highlighting the rejection pathways versus the successful controller dispatch.
@@ -43,17 +47,22 @@ Figure~\ref{fig:interceptor-functioning} illustrates the operational topology of
 \label{fig:interceptor-functioning}
 \end{figure}
 
-This declarative design offers substantial architectural advantages over traditional ad-hoc verification patterns:
+This approach provides a consistent way to apply authentication checks across protected endpoints. Its main benefits are the following:
 \begin{itemize}
-    \item \textbf{Centralized Logic:} All identity mapping and state guarding rules are consolidated within a single, cohesive engine, eliminating repetitive cross-cutting authentication code across endpoints.
-    \item \textbf{Separation of Concerns:} Controller actions remain entirely decoupled from identity checks, allowing them to focus exclusively on executing core business rules.
-    \item \textbf{Declarative Security:} Security boundaries are explicitly declared via controller method signatures using the \texttt{AuthenticatedUser} parameter. This self-documenting pattern greatly improves readability and simplifies architectural security audits.
-\end{itemize}
+\item \textbf{Centralized validation:} The extraction and validation of the authenticated user are handled in one reusable filter, avoiding repeated authentication logic in multiple controllers.
 
+\item \textbf{Separation of concerns:} Controller actions do not need to manually validate the authentication token. This allows controllers to focus on the application operation they are responsible for.
+
+\item \textbf{Declarative Security:} Security boundaries are explicitly declared via controller method signatures using the \texttt{AuthenticatedUser} parameter. This self-documenting pattern greatly improves readability and simplifies architectural security audits.
+
+\end{itemize}
 
 \subsubsection{Cookie Configuration and Session Security}
 \paragraph{}For web-based client applications, session persistence is managed using strict cookie policies to prevent token theft. Listing~\ref{lst:login-response} highlights the programmatic configuration applied when appending the session cookie to the outbound HTTP response:
-
+\paragraph{}
+\paragraph{}
+\paragraph{}
+\paragraph{}
 \begin{lstlisting}[caption={Authentication Cookie Configuration}, label={lst:login-response}]
 var cookieOptions = new CookieOptions
 {
@@ -92,9 +101,9 @@ context.Response.StatusCode = statusCode;
 As illustrated in Listing~\ref{lst:error-handling-middleware}, this middleware fulfills two primary architectural roles:
 
 \begin{itemize}
-\item \textbf{Global Exception Interception}: It acts as a safety net, capturing any unhandled exceptions during request execution—such as database connectivity issues or unforeseen system failures. By intercepting these faults, the middleware prevents raw or sensitive stack trace information from propagating to the client, which significantly hardens the API against information disclosure.
+\item \textbf{Exception Interception}: It acts as a safety net, capturing any unhandled exceptions during request execution, such as database connectivity issues or unforeseen system failures. By intercepting these faults, the middleware prevents raw or sensitive stack trace information from propagating to the client, which significantly hardens the API against information disclosure.
 
-\item \textbf{Standardized Response Mapping}: The middleware transforms intercepted exceptions into well-defined responses conforming to the \texttt{application/problem+json} format (RFC 9457). This ensures that error reporting remains consistent across the entire system, providing clients with a reliable and easily consumable interface for handling failures.
+\item \textbf{Response Mapping}: The middleware transforms intercepted exceptions into well-defined responses conforming to the \texttt{application/problem+json} format (RFC 9457). This ensures that error reporting remains consistent across the entire system, providing clients with a reliable and easily consumable interface for handling failures.
 \end{itemize}
 
 Technically, the implementation enforces a 500 Internal Server Error status code by default for unhandled faults. It then serializes a predefined ProblemResponse object into JSON, ensuring the output adheres strictly to our established API error contract, thereby maintaining seamless communication with the frontend.

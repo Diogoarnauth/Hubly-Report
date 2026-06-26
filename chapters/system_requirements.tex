@@ -1,45 +1,81 @@
 \chapter{System requirements}\label{ch:system_requirements}
 
+
+\paragraph{}This chapter presents the main requirements defined for Hubly. The requirements are divided into functional requirements, which describe the features that the system must provide, and non-functional requirements, which describe quality attributes expected from the system.
+
 \section{Functional Requirements}
-\paragraph{}This section outlines the core functional requirements of the application, which focuses on connection, discovery, and communication management between companies and digital creators. The following entities define the system's core functionality:
+\paragraph{}The functional requirements of Hubly are listed below, focusing on the main operations that the system must support:
 
 \begin{itemize}
-    \item \textbf{User Registration:} Users must complete a comprehensive registration process that includes providing accurate personal information.
-    \begin{itemize}   
-        \item \textbf{User:} An individual who accesses and uses the platform. Users can register, log in, and manage their authentication credentials. Since this application is private and secure, access is strictly restricted to authenticated users with a verified email address. After the initial registration, a user must establish their identity as either a \emph{Creator} or a \emph{Company}.    
-        
-        \item \textbf{Creator:} A user type representing content creators or influencers. A creator profile includes an artistic name, verification status, availability status, algorithmic global rating based on reviews, statistics about chats, and historical response metrics. Each creator can register and manage multiple individual \emph{Social Profiles} across different platforms.
-        
-        \begin{itemize}
-        
-            \item \textbf{Social Profile:} A granular, platform-specific representation of a creator's presence (e.g., YouTube, Instagram, TikTok). Each profile is linked to a specific platform, public username, direct link, and target audience metrics (such as follower count). It also defines customized commercial constraints, including minimum and maximum pricing tiers, and is classified under specific content sectors.
-        
-        \end{itemize}
-        
-        \item \textbf{Company:} A user type representing brands, agencies, or startups looking for marketing partnerships. A company profile contains the legal or commercial name, description, corporate size, website link, and country of headquarters. Like creators, companies map their operations to specific industry sectors.
-    
-    \end{itemize}
+    \item Users to register and authenticate.
 
-    \item \textbf{Email Confirmation:} Users must confirm their email address during the registration process to ensure the validity of their contact information.
+    \item Require email confirmation before users can access the main features of the application.
 
-    \item \textbf{Sector:} A classification system used to group both company operations and creator social profiles into specific market niches (e.g., Finance, Tech, Fashion, Gaming). This shared taxonomy enables accurate, cross-referenced discovery and high-compatibility matches during searches.
+    \item Allow each user to complete their profile either as a company or as a creator.
     
-    \item \textbf{Rating System:} A feedback mechanism that allows companies and creators to rate digital creators based on previous interactions or partnership experiences. These ratings provide insights into a creator's reliability, professionalism, communication quality, and overall performance. This system contributes to the platform's transparency and helps users make informed decisions when selecting creators for future collaborations.
+    \item Allow companies to create and manage a company profile, including information such as name, description, sectors, company size, website and country headquarters.
     
-    \item \textbf{Verification System:} A process that allows users to verify their identity and authenticity on the platform. This system enhances trust and credibility by confirming that users are who they claim to be, which is particularly important for creators seeking partnerships with companies. Verified users may receive a special badge or status on their profiles, signaling their legitimacy to potential partners.
+    \item Allow creators to create and manage a creator profile.
 
-    \item \textbf{Search Engine:} An advanced, multi-criteria discovery mechanism allowing targeted, paginated queries. The engine processes inputs distinctly based on the target entity data models:
-    \begin{itemize}
-        \item \textbf{Creator Search:} Utilizes a paginated model (\emph{CreatorSearchInputModel}) to filter profiles by platform identification (\texttt{PlatformId}), username keywords (\texttt{PlatformUserName}), specific follower brackets (\texttt{FollowersCountMin} and \texttt{FollowersCountMax}), pricing budget constraints (\texttt{PriceMin} and \texttt{PriceMax}), matching sector tags (\texttt{Sectors}), and dynamic page size control (\texttt{Page} and \texttt{PageSize}).
-        \item \textbf{Company Search:} Utilizes a paginated model (\emph{CompanySearchInputModel}) to filter corporate entities by corporate name keywords (\texttt{Name}), a list of associated business sectors (\texttt{Sectors}), workforce size categories (\texttt{CompanySize}), countries of headquarters (\texttt{Countries}), and dynamic page size control (\texttt{Page} and \texttt{PageSize}).
-    \end{itemize}
+    \item Allow creators to create and manage multiple social profiles, each associated with a specific platform, such as Instagram, YouTube, TikTok and more.
     
-    \item \textbf{Conversation \& Messaging:} A secure internal chat architecture initiated directly by a company or a creator's specific \emph{Social Profile} rather than a generic user account. This structure ensures context-specific negotiations. The chat system logs real-time messages, tracks message read status metrics per participant, and supports message editing and deletion.
+    \item Each creator social profile must store information relevant to discovery, such as platform, username, link, description, audience size, content sectors and price range.
     
-    \item \textbf{Private Tag System:} A productivity management tool that allows users to independently organize their active conversations. Users can create custom workflow tags with designated names and hexadecimal colors. These tags can be secretly assigned to conversations to track private negotiation statuses (e.g., \emph{Contacted}, \emph{Negotiation}, \emph{Accepted}, \emph{Rejected}) without the counterparty's knowledge, directly mitigating outreach confusion.
+    \item Provide a shared sector classification mechanism, allowing companies and creator social profiles to be associated with one or more sectors.
     
-    \item \textbf{Profile Views History:} An analytical tracking mechanism that logs whenever an authenticated user views a company profile or a creator's specific social profile, providing critical transparency metrics regarding platform exposure and interest trends.
+    \item Allow companies to search for creator social profiles using filters such as platform, sector, audience size and price range.
 
-    \item \textbf{Recommendation Engine:} An intelligent system that analyzes user behavior, preferences, and interactions to provide personalized suggestions for companies and creators, enhancing the overall user experience and facilitating more effective partnerships.
+    \item Allow creators to search for companies using filters such as name, sector, company size and country headquarters.
 
+    \item Allow users to view company profiles and creator social profiles.
+    
+    \item Record profile views, allowing previous interactions to be used by other system features.
+    
+    \item Allow users to initiate conversations associated with the relevant company or creator social profile.
+    
+    \item Support message exchange between participants in a conversation.
+    
+    \item Support message state management, including read status, edited messages and deleted messages.
+    
+    \item Allow users to create private conversation tags.
+    
+    \item Allow users to assign private tags to conversations, without making those tags visible to the other participant.
+
+    \item Allow users to rate creators after an interaction.
+
+    \item Maintain creator rating information based on received ratings.
+
+    \item Support account verification status for companies and creators.
+
+    \item Support availability status for creators.
+
+    \item Provide recommendations of companies or creator social profiles based on previous user interactions, such as searches and profile views.
+
+\end{itemize}
+
+\section{Non-Functional Requirements}
+\paragraph{}The non-functional requirements of Hubly are listed below, focusing on the quality attributes that the system should exhibit:
+
+\begin{itemize}
+    \item \textbf{Security}: Must restrict access to authenticated users and require email confirmation before allowing access to the main application features.
+
+    \item \textbf{Data protection}: Must avoid storing passwords in plain text and must use secure password hashing + salt mechanisms.
+
+    \item \textbf{Access control}: Must validate the authenticated user before executing protected operations.
+
+    \item \textbf{Data consistency}: Must preserve data consistency during operations that involve multiple persistence steps, such as registration, email confirmation and profile management.
+
+    \item \textbf{Maintainability}: Should be organized into separate components and layers, allowing each part of the application to be modified or extended with limited impact on the rest of the system.
+
+    \item \textbf{Modularity}: Should separate concerns between user interface, application logic and data persistence.
+
+    \item \textbf{Usability}: Should provide clear flows for registration, profile creation, search, conversation management and negotiation tracking.
+
+    \item \textbf{Performance}: Should support filtered and paginated searches, avoiding unnecessary data loading when users search for companies or creator social profiles.
+
+    \item \textbf{Portability}: Should be deployable in a containerized environment, reducing dependency on a specific local configuration.
+
+    \item \textbf{Testability}: Should support unit and integration testing, particularly for backend services, repositories and business rules.
+
+    \item \textbf{Reliability}: Should handle errors in a consistent way, returning structured responses when operations fail.
 \end{itemize}
