@@ -76,13 +76,13 @@ Response.Cookies.Append("token", tokenValue, cookieOptions);
 
 This setup follows industry-standard security baselines to safeguard tokens at rest within the user's browser:
 \begin{itemize}
-    \item \textbf{\texttt{HttpOnly}:} Prevents client-side scripts from accessing the cookie value via \texttt{document.cookie}, creating a robust defense mechanism against Cross-Site Scripting (XSS) attacks.
-    \item \textbf{\texttt{SameSite (Strict)}:} Restricts the browser from sending the cookie along with cross-site requests, mitigating Cross-Site Request Forgery (CSRF) attempts by ensuring the payload is only transmitted on requests originating natively from the application's domain.
-    \item \textbf{Persistence Policy:} Establishes a 7-day expiration boundary, balancing user convenience with session lifecycle security.
+    \item \textbf{\texttt{HttpOnly}:} Prevents client-side scripts from accessing the cookie value through \texttt{document.cookie}, reducing exposure to attacks that rely on reading cookies through JavaScript.
+    \item \textbf{\texttt{SameSite (Strict)}:} Restricts the browser from sending the cookie with cross-site requests, reducing exposure to Cross-Site Request Forgery (CSRF) attacks.
+    \item \textbf{Persistence Policy:} Defines a 7-day expiration period for the authentication cookie.
 \end{itemize}
 \subsection{Error Handling Middleware}
 
-\paragraph{}A cornerstone of our error management strategy is the global error-handling middleware, which serves as a protective layer between the core application logic and the client-side response. This component is designed to ensure that unexpected faults are captured and communicated in a standardized, predictable manner.
+\paragraph{}The backend includes a global error-handling middleware responsible for capturing unhandled exceptions during request execution. Instead of returning raw exception information to the client, the middleware returns a structured response using the \texttt{application/problem+json} format.
 
 \begin{lstlisting}[caption={Error Handling Middleware Implementation}, label={lst:error-handling-middleware}]
 private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
@@ -101,26 +101,26 @@ context.Response.StatusCode = statusCode;
 As illustrated in Listing~\ref{lst:error-handling-middleware}, this middleware fulfills two primary architectural roles:
 
 \begin{itemize}
-\item \textbf{Exception Interception}: It acts as a safety net, capturing any unhandled exceptions during request execution, such as database connectivity issues or unforeseen system failures. By intercepting these faults, the middleware prevents raw or sensitive stack trace information from propagating to the client, which significantly hardens the API against information disclosure.
+\item \textbf{Exception Interception}: It captures unhandled exceptions during request execution, such as database connectivity errors or unexpected application failures. By handling these exceptions centrally, the middleware avoids exposing stack trace information or internal implementation details to the client.
 
 \item \textbf{Response Mapping}: The middleware transforms intercepted exceptions into well-defined responses conforming to the \texttt{application/problem+json} format (RFC 9457). This ensures that error reporting remains consistent across the entire system, providing clients with a reliable and easily consumable interface for handling failures.
 \end{itemize}
 
-Technically, the implementation enforces a 500 Internal Server Error status code by default for unhandled faults. It then serializes a predefined ProblemResponse object into JSON, ensuring the output adheres strictly to our established API error contract, thereby maintaining seamless communication with the frontend.
+For unhandled exceptions, the middleware returns a \texttt{500 Internal Server Error} response and serializes a predefined \texttt{ProblemResponse} object into JSON. This keeps the response format consistent with the API error contract used by the frontend.
 
 
 \subsection{Email Service}
 
-\paragraph{}The system incorporates a dedicated email service primarily to orchestrate user identity verification. By requiring users to validate their registration via a unique verification code, we significantly enhance platform security and ensure that all accounts are linked to accessible, legitimate email addresses.
+\paragraph{}The backend includes an email service used during the account confirmation process. When a user registers, the system generates a verification code and sends it to the email address provided during registration. The user must submit this code in the application to confirm the account.
 
 The verification workflow operates as follows:
 \begin{itemize}
 \item \textbf{Code Generation}: Upon registration, the system automatically generates a unique, time-sensitive verification code.
 \item \textbf{Secure Dispatch}: The email service transmits this code to the user's provided email address.
-\item \textbf{Identity Confirmation}: The user is required to input the received code within the application to finalize the account activation process.
+\item \textbf{Account confirmation}: The user is required to input the received code within the application to finalize the account activation process.
 \end{itemize}
 
-Figure~\ref{fig:email-service-structure} illustrates the internal architecture of the email service and its integration with the core system components.
+Figure~\ref{fig:email-service-structure} illustrates the email confirmation workflow.
 
 \begin{figure}[H]
 \centering
@@ -129,4 +129,4 @@ Figure~\ref{fig:email-service-structure} illustrates the internal architecture o
 \label{fig:email-service-structure}
 \end{figure}
 
-By maintaining this structured approach to identity verification, the email service serves as a cornerstone for maintaining a clean and trustworthy user base within the application ecosystem.
+This process ensures that users can only access protected functionality after confirming the email address associated with their account.
