@@ -29,7 +29,7 @@
     \label{fig:database_tables}
 \end{figure}
 
-The relational model was designed to support the functional and structural needs of a marketplace platform. Each entity and its attributes were carefully selected to reflect real-world concepts such as users, creators, creators social profiles, companies, etc. Below is an intuitive justification for the key design decisions:
+The relational model was designed to support the functional and structural needs of a marketplace platform. Each entity and its attributes were selected to reflect real-world concepts such as users, creators, creators social profiles, companies, etc. Below is an intuitive justification for the key design decisions:
 \begin{itemize}
     \item \textbf{USERS}: Represents individual users of the platform. Attributes like id, name, email,  password\_validation, a flag is\_email\_confirmed, and a timestamp created\_at. This structure supports user authentication, account management, and email verification processes.
 
@@ -47,7 +47,7 @@ The relational model was designed to support the functional and structural needs
 
     \item \textbf{CREATOR\_SOCIAL\_PROFILES}: Stores detailed information regarding a creator's presence on specific social media platforms. Each record links to a \texttt{CREATOR} via \texttt{creator\_id} and specifies the platform through \texttt{platform\_id}. It captures essential metrics and metadata, such as \texttt{platform\_user\_name}, a \texttt{link}, \texttt{description}, \texttt{followers\_count}, and pricing ranges (\texttt{price\_min} and \texttt{price\_max}). A unique constraint on \texttt{(platform\_id, platform\_user\_name)} ensures data integrity and prevents duplicate social media accounts.
 
-    \item \textbf{CREATOR\_PROFILE\_SECTORS}: Functions as a junction table that links individual social media profiles to specific sectors. This design allows for a multi-faceted categorization of a creator's professional niche across different platforms. By associating a \texttt{profile\_id} with a \texttt{sector\_id}, the platform can effectively index creators based on the specific content domain of each individual social channel.
+    \item \textbf{CREATOR\_PROFILE\_SECTORS}: Functions as a junction table that links individual social media profiles to specific sectors. This design allows each creator social profile to be associated with one or more sectors. By associating a \texttt{profile\_id} with a \texttt{sector\_id}, the platform can effectively index creators based on the specific content domain of each individual social channel.
 
     \item \textbf{EMAIL\_CONFIRMATION}: Manages the lifecycle of email verification tokens required for user account activation. This table stores the \texttt{confirmation\_code} associated with a specific \texttt{user\_id}, along with temporal constraints defined by \texttt{created\_at} and \texttt{expires\_at} (stored as \texttt{bigint} timestamps). The \texttt{used} boolean flag tracks whether a code has already been consumed. The foreign key relationship with the \texttt{USER} table ensures that verification records are automatically removed via a cascade delete policy if the corresponding user account is deleted, maintaining database consistency.
 
@@ -69,26 +69,25 @@ The relational model was designed to support the functional and structural needs
 
 \end{itemize}
 
-\section{Database Functions and Recommendation Engine}
-\paragraph{}To ensure the high performance of our platform and minimize data transfer latency, we implemented a custom recommendation engine directly within the database layer. By offloading complex scoring algorithms to PostgreSQL, we ensure that ranking calculations are performed at the data source, returning only the most relevant, pre-scored entities. This approach leverages the engine's ability to process large datasets efficiently, moving away from traditional, resource-heavy API-side filtering.
+\section{Database Functions and Recommendation}
+\paragraph{}The system includes database functions used to compute recommendation results directly in PostgreSQL. This approach allows the ranking calculation to be performed close to the stored data and returns entities already ordered by their recommendation score. This reduces the amount of filtering required in the backend API and keeps the recommendation logic close to the data model.
 
 \subsection{Company Recommendation Algorithm}
-\paragraph{}The \texttt{get\_recommended\_companies} function implements a weighted multi-factor scoring algorithm to match companies with potential partners. It receives a user's interest profile as a \texttt{JSONB} object, allowing for dynamic, schema-less input. The \texttt{recommendation\_score} is derived from an additive model that applies specific weights to three distinct dimensions:
+\paragraph{}The \texttt{get\_recommended\_companies} function computes a recommendation score for companies based on multiple criteria. It receives the user’s interest data as a \texttt{JSONB} object, allowing different recommendation parameters to be passed to the function. The \texttt{recommendation\_score} is derived from an additive model that applies specific weights to three distinct dimensions:
 \begin{itemize}
-\item \textbf{Sector Affinity (Weight 10x)}: Analyzes sector alignment between user interests and company expertise.
-\item \textbf{Geographic Alignment (Weight 5x)}: Prioritizes companies based on the user's preferred country headquarters.
-\item \textbf{Scale Compatibility (Weight 2x)}: Adjusts relevance based on the size of the business entity.
+\item \textbf{Sector Match (Weight 10x)}: Analyzes sector alignment between user interests and company expertise.
+\item \textbf{Country match (Weight 5x)}: Prioritizes companies based on the user's preferred country headquarters.
+\item \textbf{Company size match (Weight 2x)}: Adjusts relevance based on the size of the business entity.
 \end{itemize}
-\paragraph{}By multiplying these inputs by predefined coefficients, the algorithm produces a prioritized ranking. Furthermore, it ensures a "fresh feed" by dynamically excluding previously viewed entities via a cross-reference with the \texttt{profile\_views\_history} table.
-
+\paragraph{}By multiplying these inputs by predefined coefficients, the algorithm produces a prioritized ranking. The function also excludes companies that the user has already viewed, using the \texttt{profile\_views\_history} table.
 \subsection{Creator Social Profile Recommendation Algorithm}
-\paragraph{}The \texttt{get\_recommended\_social\_profiles} function employs a sophisticated, multi-dimensional analysis to rank content creators. Unlike standard filtering, this algorithm computes a \texttt{recommendation\_score} using a nuanced scoring logic:
+\paragraph{}The \texttt{get\_recommended\_social\_profiles} function computes a recommendation score for creator social profiles based on several criteria. Unlike standard filtering, this algorithm computes a \texttt{recommendation\_score} using a nuanced scoring logic:
 \begin{itemize}
-\item \textbf{Domain Expertise}: High-weight aggregation of matches across creator sectors (\texttt{Weight 100x}).
-\item \textbf{Platform Preference}: Boosts results based on the user's specific social channel focus (\texttt{Weight 10x}).
-\item \textbf{Operational Readiness}: Direct integration of real-time \texttt{availability\_status}, providing a binary boost for active creators.
+\item \textbf{Sector match}: High-weight aggregation of matches across creator sectors (\texttt{Weight 100x}).
+\item \textbf{Platform match}: Boosts results based on the user's specific social channel focus (\texttt{Weight 10x}).
+\item \textbf{Availability status}: Direct integration of real-time \texttt{availability\_status}, providing a binary boost for active creators.
 \item \textbf{Reputation Metrics}: Incorporates the creator's \texttt{global\_rating}, ensuring quality-first results.
-\item \textbf{Dynamic Budget Optimization}: A conditional pricing logic that validates the creator's \texttt{price\_min} against the user’s \texttt{avg\_price} budget, providing a 20\% tolerance margin to balance affordability with value.
+\item \textbf{Price range match}: A conditional pricing logic that validates the creator's \texttt{price\_min} against the user’s \texttt{avg\_price} budget, providing a 20\% tolerance margin to balance affordability with value.
 \end{itemize}
 
-This approach transforms the recommendation feed from a static list into a high-utility discovery tool. By processing these weights directly in SQL, we achieve sub-millisecond ranking performance, even when evaluating diverse criteria across thousands of social profiles.
+This approach allows the recommendation feed to be ordered according to criteria stored in the database and preferences provided by the user.
