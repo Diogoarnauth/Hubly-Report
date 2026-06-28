@@ -20,6 +20,47 @@ The backend is organized into distinct layers to separate request handling, busi
 \end{itemize}
 
 Furthermore, the backend also includes a \textbf{Transaction Manager}, used in operations that require multiple database changes to be handled as a single unit. This component ensures the atomicity of database interactions by grouping multiple operations into a single logical unit. Consequently, all operations within a transaction are committed only if entirely successful, otherwise, the system triggers a rollback, effectively preventing the database from entering an inconsistent state.
+
+\subsection{Project Structure and Dependency Management} \label{subsec:project-structure}
+
+\paragraph{} The backend solution is organized into four distinct .NET projects, each defined by an individual \texttt{.csproj} file and managed with its own set packages. This modularization enforces physical architectural boundaries and dictates the dependency graph at the compilation level:
+
+\begin{description}
+    \item[\textbf{Hubly.Domain}:] Acts as the system core, containing exclusively the business entities and domain models. It is designed to be agnostic of any persistence technology or framework, maintaining independence from the other solution layers.
+
+    \item[\textbf{Hubly.Infrastructure}:] Implements the data access layer. It contains the concrete repository implementations, their corresponding interfaces, and the \texttt{HublyDbContext}. The latter serves as the primary bridge to the database, configuring the mapping between domain entities and PostgreSQL tables via Entity Framework Core.
+
+    \item[\textbf{Hubly.Services}:] Contains the application services and their respective interfaces, which orchestrate the business logic. This project also includes specialized components such as password/token encoders (handling cryptographic hashing and salting), domain-specific error definitions (\textit{DomainErrors}) used for result validation, and the backend unit test suite.
+
+    \item[\textbf{Hubly.Api}:] Functions as the application entry point (\texttt{Microsoft.NET.Sdk.Web}). It manages the interaction with external clients through controllers and Data Transfer Objects (DTOs). This project also encapsulates the cross-cutting concerns of the web layer, including the global exception handling middleware, the authentication/authorization pipeline, the \texttt{ProblemResponse} definitions, and the URI routing configurations.
+\end{description}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/project_dependencies.png}
+    \caption{Backend Project Dependencies}
+    \label{fig:project-dependencies}
+\end{figure}
+
+\paragraph{} The dependency graph follows a unidirectional flow. This structure prevents circular dependencies by ensuring that inner layers (Domain) remain isolated, while infrastructural concerns are encapsulated within \texttt{Infrastructure} and \texttt{Api}. Furthermore, this separation facilitates maintenance and supports isolated unit testing by allowing the replacement of infrastructure components with mocks via the \texttt{Moq} framework.
+
+\subsection{Application Composition and Dependency Injection} \label{subsec:app-composition}
+
+\paragraph{} The composition of the Hubly API is centralized in the \texttt{Program.cs} file, which serves as the application's entry point and the Composition Root. This file is responsible for configuring the Dependency Injection (DI) container, the mechanism that wires together the distinct layers defined in the project structure. The configuration process manages several architectural concerns:
+
+\begin{itemize}
+    \item \textbf{Service Registration}: The DI container maps interfaces to their concrete implementations (e.g., \texttt{IUserService} to \texttt{UserService}), decoupling the consumer from the implementation. This ensures that the layers interact exclusively through defined abstractions.
+    
+    \item \textbf{Infrastructure Initialization}: The database context (\texttt{HublyDbContext}) is initialized and configured with the PostgreSQL provider, establishing the link between the domain entities and the underlying storage.
+    
+    \item \textbf{Pipeline Configuration}: The HTTP request pipeline is structured to process incoming traffic through a specific sequence of middlewares and filters. This includes the global \texttt{ExceptionMiddleware} for standardized error reporting, CORS policies for origin security, and the registration of the \texttt{RequireAuthenticationAttribute} as a global filter to enforce security boundaries.
+    
+    \item \textbf{Cross-Cutting Concerns}: Registration of singleton domain configuration objects and mapping profiles (using \textit{Mapster}) ensures consistent data transformation between domain entities and Data Transfer Objects (DTOs).
+\end{itemize}
+
+\paragraph{} This centralized approach ensures that all dependencies are resolved at runtime, reinforcing the isolation between layers and allowing for the integration of new services without modifying the core business logic.
+
+
 \subsection{Authentication and Authorization Pipeline} \label{subsec:auth_pipeline}
 
 \paragraph{}To enforce strict security boundaries across the Hubly API, most endpoints are protected by a centralized interception mechanism that validates both user authentication and account activation status before any business logic is executed. Specifically, the system mandates that every inbound request to a protected resource must originate from a legitimate, active session belonging to a user who has successfully verified their email address.
