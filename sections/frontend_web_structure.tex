@@ -15,19 +15,19 @@
 \end{itemize}
 
 \section{Components Architecture}
-\paragraph{}Components form the structural foundation of our frontend. By designing them to be highly decoupled from specific pages, we ensure maximum reusability and maintainability across the entire application.
+\paragraph{}Components define the main building blocks of the frontend. They were organized to reduce dependency on specific pages and to support reuse across different parts of the application.
 
-We adopted a modular approach for the \texttt{components} folder to improve code maintainability. General-purpose elements that appear across multiple views, such as buttons and form inputs, are centralized in the \texttt{ui} subdirectory. Utilizing the \texttt{shadcn/ui} library for these shared components allowed us to enforce a standardized and cohesive user interface.
+The components folder follows a modular organization to improve code maintainability. General-purpose elements that appear across multiple views, such as buttons and form inputs, are centralized in the \texttt{ui} subdirectory. The \texttt{shadcn/ui} library was used for these shared components, supporting consistency across common interface elements.
 
-Conversely, components that are tailored to a specific feature are grouped into dedicated, context-specific folders. For instance, the \texttt{chat} and \texttt{search} directories house specialized components such as \texttt{ChatDashboard} and \texttt{CreatorSearch}, ensuring that domain-specific logic remains neatly compartmentalized and easy to locate.
+Components associated with specific features are grouped into dedicated folders. For example, the \texttt{chat} and \texttt{search} directories contain components such as \texttt{ChatDashboard} and \texttt{CreatorSearch}. This organization helps keep feature-related components separated and easier to locate.
 \section{Global State and Contexts} \label{sec:contexts_web}
 
 \paragraph{}In our application, certain data must be instantly accessible across almost every view. The most critical piece of global information is the authenticated user's session data (specifically their \texttt{id}, \texttt{name}, and \texttt{role} as a creator or company). This information is heavily utilized by global components like the \texttt{Navbar}, which adapts its UI and navigation links based on the active user profile.
 
-To handle this efficiently without making redundant API calls (such as repeatedly fetching the user's full profile on every page load), we implemented a highly optimized state management architecture combining React's Context API with \textbf{TanStack React Query}.
+To avoid repeatedly requesting the same user information from the backend on each page load, the frontend combines React’s Context API with \textbf{TanStack React Query}. React Query is used to fetch and cache server-side data, while React Context makes selected state available to components that need it.
 
 \subsection{Server State Caching with React Query}
-\paragraph{}We rely on React Query for server-state management. As demonstrated in our \texttt{UserProvider}, we utilize the \texttt{useQuery} hook to fetch the current user's minimal details. React Query automatically caches this response. By configuring a \texttt{staleTime} of 30 minutes, we guarantee that as the user navigates the platform, the application instantly retrieves their details from the local cache rather than constantly querying the backend.
+\paragraph{}React Query is used for server-state management. As demonstrated in the \texttt{UserProvider}, the \texttt{useQuery} hook fetches the current user's basic information. React Query caches this response. By configuring a \texttt{staleTime} of 30 minutes, the application can reuse the cached user data during navigation instead of requesting it from the backend on every page change.
 
 \begin{lstlisting}[caption={UserProvider utilizing React Query}, label={lst:user-provider}]
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
@@ -52,9 +52,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 \end{lstlisting}
 
 \subsection{Context Distribution}
-Once React Query secures and caches the data, we use React's Context API to distribute it seamlessly throughout the component tree. We established a \texttt{UserContext} accompanied by a custom hook named \texttt{useUser}. This abstraction allows any component (like the \texttt{Navbar}) to cleanly access the user object, loading indicators, and authentication methods (such as \texttt{logout} or \texttt{refreshUser}) without prop-drilling or concerning itself with data-fetching logic.
+\paragraph{}After React Query fetches and caches the data, React’s Context API is used to make it available throughout the component tree. A \texttt{UserContext} was created together with a custom hook named \texttt{useUser}. This abstraction allows components, such as the Navbar, to access the user object, loading state and authentication-related methods, such as \texttt{logout} or \texttt{refreshUser}, without passing props through multiple component levels.
 
-To ensure these contexts operate application-wide, we centralized them within a \texttt{Providers} wrapper. This wrapper encapsulates the Next.js \texttt{RootLayout}, injecting the \texttt{QueryClientProvider}, \texttt{ThemeProvider}, and our \texttt{UserProvider} into the very top of the DOM hierarchy.
+To make these contexts available across the application, they are centralized in a \texttt{Providers} wrapper. This wrapper includes the \texttt{QueryClientProvider}, \texttt{ThemeProvider} and \texttt{UserProvider} around the Next.js \texttt{RootLayout}.
 
 \begin{lstlisting}[caption={Global Providers Setup}, label={lst:providers-setup}]
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -70,11 +70,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 \end{lstlisting}
 
 \subsection{Components Interaction}
-\paragraph{}Our frontend design strictly follows React's unidirectional data flow to coordinate behaviors between complex view structures. Instead of letting deeply nested views manage isolated instances of data, a master parent component encapsulates the primary state and orchestrates its sub-components using specialized properties (\texttt{props}) and event callbacks.
 
-A clear architectural demonstration of this pattern is found in the communication dashboard. The \texttt{ChatDashboard} component acts as the parent container, maintaining the state of the active chat channel via the \texttt{selectedConvId} hook. It manages two highly specialized child components: the \texttt{ConversationSidebar} and the \texttt{ChatPage}.
+\paragraph{}The frontend follows React's unidirectional data flow to coordinate state between parent and child components. In some views, a parent component stores the main state and passes data or callbacks to child components through properties (\texttt{props}).
 
-To achieve seamless interoperability without tight coupling, the parent component injects state down to its children and listens for updates through structural callbacks, as shown in the layout definition below:
+This pattern is used in the communication dashboard. The \texttt{ChatDashboard} component acts as the parent container and stores the state of the active conversation through \texttt{selectedConvId}. It coordinates two child components: \texttt{ConversationSidebar} and \texttt{ChatPage}.
+
+The parent component passes the selected conversation state to its children and receives updates through callback functions, as shown in the layout definition below:
 
 \begin{lstlisting}[caption={Parent state delegation inside ChatDashboard}, label={lst:chat-dashboard-interaction}]
 {/* Sidebar (List of Messages) - Receives active ID and a callback */}
@@ -99,16 +100,16 @@ To achieve seamless interoperability without tight coupling, the parent componen
 </div>
 \end{lstlisting}
 
-In this design, the \texttt{ConversationSidebar} child component triggers the \texttt{onSelectConversation} callback whenever a user interacts with a conversation item. This action instantly updates the parent state (\texttt{selectedConvId}). Consequently, the parent triggers a re-render, automatically refreshing the visual selection highlight inside the sidebar while simultaneously safe-mounting or updating the \texttt{ChatPage} viewport with the freshly selected conversation context.
+In this design, the \texttt{ConversationSidebar} child component triggers the \texttt{onSelectConversation} callback whenever a user interacts with a conversation item. This action instantly updates the parent state (\texttt{selectedConvId}). As a result, the parent component updates the selected conversation state and re-renders the relevant child components. The sidebar updates the selected conversation indicator, and the \texttt{ChatPage} displays the conversation associated with the selected identifier.
 
 
 \subsection{API Interactions and Service Layer}
-\paragraph{}To separate business and data-fetching logic from the presentation layer, our frontend architecture enforces a strict separation of concerns using a dedicated service tier. Visual components do not query endpoints directly; instead, they interact with centralized service singletons that abstract network requests, interfaces, and API paths.
+\paragraph{}The frontend uses a service layer to separate API communication from presentation components. Components do not call API endpoints directly. Instead, they use service classes that encapsulate network requests, interfaces and API paths.
 
-Components consume this data lifecycle primarily through React's \texttt{useEffect} hook. This hook triggers asynchronous data collection when a component is mounted or when specific tracking states shift, safely managing internal loading flags and populating local state vectors upon successful response resolution.
+Components can request data through React's \texttt{useEffect} hook when data must be loaded during component initialization or when relevant state values change. This hook allows the component to execute asynchronous requests, update loading states and store the returned data in local state.
 
-A clear implementation of this decoupling pattern can be observed in the sector categorization module. As demonstrated in Listing~\ref{lst:sector-component-useEffect}, the component uses a clean asynchronous sequence wrapper to handle sector ingestion on lifecycle initialization:
-
+An example of this pattern is the sector loading component. As shown in Listing~\ref{lst:sector-component-useEffect}, the component uses an asynchronous function inside \texttt{useEffect} to load the available sectors when the component is initialized:
+\paragraph{}
 \begin{lstlisting}[caption={Component data fetching via useEffect}, label={lst:sector-component-useEffect}]
 useEffect(() => {
     async function fetchSectors() {
@@ -125,7 +126,7 @@ useEffect(() => {
 }, []);
 \end{lstlisting}
 
-Behind this interaction, the \texttt{SectorService} class encapsulates the low-level network communication. By implementing a standardized service interface (\texttt{ISectorService}) and relying on an internal centralized \texttt{ApiClient} abstraction alongside structured route dictionaries (\texttt{API\_ENDPOINTS}), the service provides strongly typed data contracts to the user interface, as detailed below:
+The \texttt{SectorService} class encapsulates the low-level network communication. By implementing a standardized service interface (\texttt{ISectorService}) and relying on an internal centralized \texttt{ApiClient} abstraction alongside structured route dictionaries (\texttt{API\_ENDPOINTS}), the service provides strongly typed data contracts to the user interface, as detailed below:
 
 \begin{lstlisting}[caption={Sector Service layer implementation}, label={lst:sector-service-implementation}]
 import ISectorService, { Sector } from "../interfaces/ISectorService";
@@ -149,16 +150,16 @@ class SectorService implements ISectorService {
 export default new SectorService();
 \end{lstlisting}
 
-This architecture offers major benefits over standard inline fetch approaches. If an API endpoint structure changes or if custom headers need to be appended globally, modifications are constrained to the network layer configs (\texttt{ApiClient} or \texttt{API\_ENDPOINTS}), completely neutralizing side effects over the visual DOM tree and rendering components.
+This organization avoids repeating API request logic inside multiple components. If an endpoint path changes or if request configuration needs to be updated, the change can be made in the \texttt{ApiClient} or in the \texttt{API\_ENDPOINTS} definitions, without modifying each component that consumes the service.
 
 \section{Contexts} \label{sec:contexts_web}
-\paragraph{}In modern web applications, particularly those utilizing meta-frameworks like Next.js that blend server-side rendering with client-side hydration, sharing reactive state across deeply nested components can become complex. In the React ecosystem, contexts are used to share data and state between components without the need to pass props through the entire component tree (\textit{prop-drilling}). In our implementation, we strategically leverage React's Context API to manage global state, handle identity validation, and, most importantly, provide a unified real-time infrastructure through the \texttt{SignalRContext}.
+\paragraph{}In web applications, particularly those using meta-frameworks such as Next.js, which combine server-side rendering with client-side hydration, sharing state across nested components can become complex. In the React ecosystem, contexts are used to share data and state between components without the need to pass props through the entire component tree (\textit{prop-drilling}). In this project, React's Context API is used to manage shared state, including user information, identity-related data and the SignalR connection used by the messaging components.
 
-The \texttt{SignalRContext} acts as a shared, persistent architectural foundation for the entire messaging ecosystem of Hubly. Instead of forcing separate views, such as the conversation list sidebar and the active chat viewport, to open independent network connections, this context instantiates and maintains a single, global bi-directional WebSocket connection with our backend event hub (\texttt{/api/hubly-events}). 
+The \texttt{SignalRContext} provides a shared connection for the messaging components of Hubly. Instead of opening separate network connections in different views, such as the conversation list sidebar and the active chat view, this context creates and maintains a single bi-directional WebSocket connection with the backend event hub (\texttt{/api/hubly-events}).
 
-We treat this context as a centralized connection manager implementing a Singleton-like behavior. This approach optimizes client and server resources by avoiding redundant handshakes, ensuring that whenever a user navigates between chat modules, the underlying stream remains active, synchronized, and ready to intercept server-driven events.
+This context works as a centralized connection manager. It avoids creating multiple connections for the same user session and allows chat-related components to reuse the same SignalR connection when required.
 
-To implement this infrastructure, we developed a \texttt{SignalRProvider} component. It wraps the specific layout structures within the application that require real-time capabilities (such as creator and company chat sub-routes). This component initializes the connection lifecycle, configures automatic reconnection strategies, handles connection errors, and exposes the active hub instance to all nested consumers. The return statement of the \texttt{SignalRProvider} component is implemented as follows:
+To implement this behavior, a \texttt{SignalRProvider} component was created. It wraps the application layouts that require real-time communication, such as creator and company chat routes. This component initializes the connection, configures automatic reconnection, handles connection errors and exposes the hub connection to nested components. The return statement of the \texttt{SignalRProvider} component is implemented as follows:
 
 \begin{lstlisting}[caption={SignalRProvider implementation snippet}, label={lst:signalr-provider}]
     return (
@@ -168,17 +169,17 @@ To implement this infrastructure, we developed a \texttt{SignalRProvider} compon
     );
 \end{lstlisting}
 
-As shown above, the provider supplies the underlying \texttt{HubConnection} object along with a reactive boolean flag (\texttt{isConnected}) that dictates whether the client is currently online. When the provider is mounted within a layout, it automatically kicks off the connection startup sequence asynchronously.
+As shown above, the provider supplies the \texttt{HubConnection} object together with a boolean flag, \texttt{isConnected}, which indicates whether the client is currently connected. When the provider is mounted within a layout, it starts the connection asynchronously.
 
-To streamline the consumption of this real-time stream inside our functional components, we exposed a custom hook called \texttt{useSignalR}. This hook abstracts away the internal mechanics of React's \texttt{useContext}, allowing any message feed or navigation bar to instantly tap into the persistent connection. A typical invocation of this hook inside active views looks as follows:
+A custom hook called \texttt{useSignalR} was created to allow components to access the SignalR context. This hook wraps the use of React's \texttt{useContext}, allowing components such as message feeds or navigation elements to access the shared connection when required. A typical invocation of this hook inside active views is shown below:
 
 \begin{lstlisting}[caption={Consuming the useSignalR hook}, label={lst:use-signalr-consumption}]
 const { connection, isConnected } = useSignalR();
 \end{lstlisting}
 
-This hook is heavily utilized across our messaging components. For instance, the \texttt{ChatPage} uses it to invoke streaming topics (e.g., \texttt{JoinTopic}) and listen to incoming payloads like \texttt{NewMessage} or \texttt{MessageUpdated} to update the UI instantly. Simultaneously, the \texttt{ConversationSidebar} consumes the exact same connection instance to listen for \texttt{SidebarUpdate} events, keeping unread message counts and preview snippets dynamically synchronized in the background.
+This hook is used across the messaging components. For instance, the \texttt{ChatPage} uses it to join topics, such as \texttt{JoinTopic}, and listen to events such as \texttt{NewMessage} or \texttt{MessageUpdated}, updating the interface when those events are received. The \texttt{ConversationSidebar} uses the same connection instance to listen for \texttt{SidebarUpdate} events, allowing unread message counts and preview information to be updated when relevant events are received.
 
-The defensive implementation of the \texttt{useSignalR} custom hook ensures architectural integrity by verifying the existence of the context boundary during runtime:
+The \texttt{useSignalR} hook checks whether it is being used inside a \texttt{SignalRProvider}. If the context is not available, the hook throws an error during runtime:
 
 \begin{lstlisting}[caption={useSignalR hook implementation}, label={lst:use-signalr-hook}]
 export const useSignalR = () => {
@@ -190,19 +191,17 @@ export const useSignalR = () => {
 };
 \end{lstlisting}
 
-In addition to the real-time communication infrastructure, other vital contexts were implemented to separate concerns and govern different lifecycles of the Hubly ecosystem:
+In addition to the real-time communication context, other contexts were implemented to separate concerns and manage shared state in different parts of the application:
 
 \begin{itemize}
-    \item \texttt{UserContext} (\texttt{useUser}): Acts as the application's global identity state and access guard. It caches the authenticated user's profile and roles, serving as a client-side routing middleware that redirects incomplete sessions to the onboarding flow or restricts unauthorized access to core dashboards.
-    \item \texttt{DashboardContext} (\texttt{useDashboardContext}): Serves as a localized state scope for the main dashboard layout. It manages shared layout behaviors, such as global loading states (\texttt{isLoading}) across separate asynchronous components, including recommendation feeds and trending content carousels.
-    \item \texttt{And some more...}
+\item \texttt{UserContext} (\texttt{useUser}): Stores authenticated user information, including the user's profile and role. It is used by components that require access to the current user's session state or identity-related information.
+\item \texttt{DashboardContext} (\texttt{useDashboardContext}): Defines a shared state scope for the main dashboard layout. It manages state used across dashboard components, such as loading states associated with asynchronous data loading, including recommendation feeds and trending content sections.
 \end{itemize}
 
-
 \section{Middleware} \label{sec:middleware_web}
-\paragraph{}To optimize navigation and enforce client-side routing boundaries, the application implements a custom Next.js middleware that intercepts incoming requests before they reach the rendering phase. This mechanism operates strictly on frontend page routes, ensuring that users are seamlessly directed to the appropriate views based on their session state without introducing overhead or interfering with backend API operations. 
+\paragraph{}To support navigation and client-side route control, the application implements a custom Next.js middleware that processes incoming requests before they reach the rendering phase. This mechanism operates only on frontend page routes, directing users to the appropriate views based on their session state without interfering with backend API operations.
 
-Architecturally, the authentication token is stored within a cookie configured with the \texttt{HttpOnly} attribute to prevent client-side access and mitigate Cross-Site Scripting (XSS) vulnerabilities. However, since the middleware executes exclusively on the server-side during the request lifecycle, it can securely evaluate the presence of the token from the HTTP request headers. At this layer, the middleware performs a lightweight, non-blocking evaluation: it simply verifies whether the token exists. It does not cryptographically validate the token's structural integrity or expiration date, as this computationally expensive verification is properly deferred to the backend services during subsequent API data fetches. If a protected route is requested and the token is absent, the user is proactively redirected to the landing page. Conversely, if an authenticated user attempts to access redundant public registration forms, they are forwarded directly to the main dashboard.
+The authentication token is stored in a cookie configured with the \texttt{HttpOnly} attribute, which prevents client-side JavaScript from accessing its value and reduces exposure to Cross-Site Scripting (XSS) attacks. Since the middleware runs on the server side during the request lifecycle, it can read the token from the request cookies. At this layer, the middleware only checks whether the token exists. It does not validate the token structure or expiration date, since this validation is performed by the backend when protected API endpoints are called. If a protected route is requested and the token is absent, the user is redirected to the landing page. Conversely, if a user with an authentication token accesses public pages such as registration routes, the user is redirected to the main dashboard.
 
 \begin{lstlisting}[caption={Middleware routing controls}, label={lst:middleware_frontend_web}]
 const publicRoutes = ['/', '/register', '/register/confirmEmail'];
@@ -228,32 +227,34 @@ export const config = {
 };
 \end{lstlisting}
 
-By intercepting top-level document requests, the middleware evaluates the user's navigational context through these secure cookie lookups. It handles automated adjustments to the application's flow in real-time, delivering a fluid user experience while establishing initial guardrails for protected layout modules.
+The middleware evaluates frontend page requests according to the requested path and the presence of the authentication token in the request cookies. Based on this information, it redirects users when necessary and allows the request to continue when no routing rule applies. This provides an initial route-level check for protected frontend pages, while authentication and authorization for API operations remain handled by the backend.
 
 \subsection{Architecture Components}
-\paragraph{}\textbf{Route Classification System:}
-The publicRoutes array defines frontend pages accessible without authentication, including the home page (/), user registration (/register), and email confirmation (/register/confirmEmail) routes. This centralized configuration allows for easy modification of public access permissions as the application grows.
 
-\textbf{Selective Route Matching:}
-The matcher configuration ensures the middleware only processes frontend page requests while excluding:
+\paragraph{}\textbf{Route classification:}
+The \texttt{publicRoutes} array defines frontend pages that can be accessed without authentication, including the home page (\texttt{/}), user registration (\texttt{/register}) and email confirmation (\texttt{/register/confirmEmail}) routes. This centralized configuration allows public routes to be modified in one place.
+
+\paragraph{}\textbf{Selective route matching:}
+The \texttt{matcher} configuration ensures that the middleware only processes frontend page requests while excluding:
 \begin{itemize}
-\item API routes (\texttt{/api/*})
-\item Next.js internal routes (\texttt{/\_next/*})
-\item Static assets (files with extensions like \texttt{.css}, \texttt{.js}, \texttt{.png}, etc.)
-\end{itemize}
-This selective approach prevents interference with API functionality and static resource serving.
-
-\textbf{Token-Based Authentication Check:}
-The middleware extracts authentication tokens from HTTP cookies to determine user authentication status. This approach provides a server-side validation mechanism that works seamlessly with Next.js's server-side rendering capabilities.
-
-\textbf{Intelligent Page Redirection:}
-The system implements smart redirection logic for optimal user experience:
-\begin{itemize}
-\item Unauthenticated Access Protection: Users without valid tokens attempting to access protected frontend pages are redirected to the home/login page, preventing access to sensitive areas like user dashboards or account pages.
-\item Authentication Flow Optimization: Users with valid tokens who navigate to login or registration pages are automatically redirected to the dashboard, eliminating redundant authentication steps and improving user flow.
+\item API routes (\texttt{/api/*});
+\item Next.js internal routes (\texttt{/\_next/*});
+\item Static assets, such as files with extensions like \texttt{.css}, \texttt{.js} or \texttt{.png}.
 \end{itemize}
 
-\textbf{Request Continuation:}
-When no redirection conditions are met, the middleware allows requests to proceed normally using NextResponse.next(), maintaining standard Next.js routing behavior for all appropriate scenarios.
+This prevents the middleware from interfering with API requests and static resource delivery.
 
-This middleware architecture focuses specifically on frontend user experience and page-level access control, while API security remains the responsibility of individual endpoint implementations.
+\paragraph{}\textbf{Token-based route check:}
+The middleware reads the authentication token from HTTP cookies to determine whether the request is associated with an authenticated session. This check is performed during server-side request handling and is used only for frontend route redirection.
+
+\paragraph{}\textbf{Page redirection:}
+The middleware applies redirection rules based on the requested route and the presence of the authentication token:
+\begin{itemize}
+\item Users without an authentication token who attempt to access protected frontend pages are redirected to the home page.
+\item Users with an authentication token who access the home page or registration pages are redirected to the dashboard.
+\end{itemize}
+
+\paragraph{}\textbf{Request continuation:}
+When no redirection condition is met, the middleware allows the request to proceed normally using \texttt{NextResponse.next()}.
+
+\paragraph{}This middleware is limited to frontend route redirection. Authentication and authorization for API operations remain handled by the backend.

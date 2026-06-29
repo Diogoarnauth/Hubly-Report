@@ -1,70 +1,69 @@
-\paragraph{} FALTA VER ESTA PARTE TODA 
 \section{Backend Key Functionalities}
 
 \subsection{User Management and Authentication}
-The user management module forms the core of the system, handling identity lifecycle, security, and profile interactions. While the system provides standard CRUD operations for user data, its implementation prioritizes security and data consistency.
+\paragraph{}The user management module is responsible for account-related operations, including user registration, authentication, email confirmation and profile-related interactions. In addition to basic operations (CRUD) over user data, this module includes mechanisms for password handling, session management and email verification.
 
-\subsubsection{Secure Identity Lifecycle and Authentication}
-Authentication is handled through a stateless token-based mechanism. The system enforces several security measures:
+\subsubsection{Identity and Authentication}
+\paragraph{}Authentication is handled through a token-based mechanism. The system includes the following mechanisms:
 \begin{itemize}
-    \item \textbf{Secure Password Handling}: Passwords are never stored in plain text. We utilize a dedicated \texttt{IPasswordEncoder} to create validation information (hashing + salt), ensuring robust protection against credential exposure.
+    \item \textbf{Secure Password Handling}: Passwords are not stored in plain text. A dedicated \texttt{IPasswordEncoder} is used to generate password validation information based on hashing and salt.
     \begin{itemize}
         \item \textbf{Why Hashing and Salt?}: When a user registers or authenticates, a cryptographic hashing function transforms the plaintext password into a unique, fixed-length, and irreversible string, making it mathematically unfeasible to reconstruct the original password if the data is intercepted. To elevate this security standard, a dynamic \textit{salt}, a unique, random string is appended to each password prior to the hashing process. This ensures that even if multiple users choose the exact same password, their final stored hashes will be completely distinct from one another, effectively neutralizing dictionary attacks and pre-computed rainbow table compromises.
     \end{itemize}
     \item \textbf{Token Management}: The system manages user sessions by limiting the number of active tokens per user. When the limit is reached, the system automatically invalidates the oldest session, maintaining a balanced token lifecycle.
-    \item \textbf{Email Verification Pipeline}: To ensure user authenticity, the registration process triggers an asynchronous email confirmation flow. This uses a numeric code generator with a strictly defined expiration policy, enforced by the persistence layer.
+    \item \textbf{Email Verification}: To ensure user authenticity, the registration process triggers an asynchronous email confirmation flow. This uses a numeric code generator with a strictly defined expiration policy, enforced by the persistence layer.
 \end{itemize}
 
 \subsection{Transactional Integrity}
-\paragraph{}A defining characteristic of our backend is the use of an \textbf{Atomic Transaction Manager}. All sensitive user operations, such as registration, password changes, or email verification, are wrapped within transactional contexts. 
-This ensures that actions such as creating a user record, generating an initial confirmation code, and updating security metadata are executed as a single unit of work. If any part of the operation fails, the system triggers a rollback, preventing the persistence of inconsistent or orphaned data. This approach is further reinforced by the \textit{OneOf} functional pattern, which forces explicit error handling for every business rule violation (e.g., duplicate emails, invalid credentials), providing predictable API responses.
+\paragraph{}A defining characteristic of our backend is the use of an \textbf{Atomic Transaction Manager}. Operations such as registration, password changes and email verification are executed within transactional contexts when they require multiple database changes. 
+This ensures that actions such as creating a user record, generating an initial confirmation code, and updating security metadata are executed as a single unit of work. If one of the operations fails, the transaction is rolled back, avoiding partial updates. This approach is further reinforced by the \textit{OneOf} functional pattern, which forces explicit error handling for every business rule violation (e.g., duplicate emails, invalid credentials), providing predictable API responses.
 
-\subsection{Multi-Criteria Discovery and Search Engine}
-\paragraph{}To break the barriers of traditional fragmented networking, the platform implements an advanced, decoupled discovery engine designed to process highly targeted queries. Instead of relying on static or monolithic recommendations, the system separates search behavior into two distinct domain input models, providing optimized and paginated data extraction tailored to each entity's specific metadata:
+\subsection{Multi-Criteria Search}
+\paragraph{}The backend implements search mechanisms that allow users to query companies and creator social profiles using multiple criteria. The search logic is separated into two input models, one for creator social profiles and one for companies. Both models support pagination and filters adapted to the corresponding entity.
 \begin{itemize}
-    \item \textbf{Creator Profile Discovery (\texttt{CreatorSearchInputModel}):} This engine handles multi-dimensional queries to filter content creators based on their individual social presence rather than generic user metrics. It processes inputs such as platform identification (\texttt{PlatformId}), username keywords (\texttt{PlatformUserName}), granular audience sizing (\texttt{FollowersCountMin} and \texttt{FollowersCountMax}), commercial budget constraints (\texttt{PriceMin} and \texttt{PriceMax}), and specific market niches (\texttt{Sectors}), all encapsulated within an optimized pagination controller (\texttt{Page} and \texttt{PageSize}). To safeguard platform reputation, this discovery layer incorporates a peer-reviewed rating system with built-in mathematical validation to strictly prevent self-rating bias.
-    \item \textbf{Company Discovery (\texttt{CompanySearchInputModel}):} Designed for creators seeking brand partnerships, this filters organizations by corporate name keywords (\texttt{Name}), active industrial or business sectors (\texttt{Sectors}), workforce scaling categories (\texttt{CompanySize}), and geographic parameters (\texttt{Countries}), utilizing matching pagination rules.
+    \item \textbf{Creator social profile search (\texttt{CreatorSearchInputModel}):} This model filters creator social profiles according to information associated with each specific platform profile. It processes inputs such as platform identification (\texttt{PlatformId}), username keywords (\texttt{PlatformUserName}), granular audience sizing (\texttt{FollowersCountMin} and \texttt{FollowersCountMax}), commercial budget constraints (\texttt{PriceMin} and \texttt{PriceMax}), and specific market niches (\texttt{Sectors}), all encapsulated within an optimized pagination controller (\texttt{Page} and \texttt{PageSize}). To safeguard platform reputation, this discovery layer incorporates a peer-reviewed rating system with built-in mathematical validation to strictly prevent self-rating bias.
+    \item \textbf{Company search (\texttt{CompanySearchInputModel}):} Designed for creators seeking brand partnerships, this filters organizations by corporate name keywords (\texttt{Name}), active industrial or business sectors (\texttt{Sectors}), workforce scaling categories (\texttt{CompanySize}), and geographic parameters (\texttt{Countries}), utilizing matching pagination rules.
 \end{itemize}
 
 \subsection{Messaging and Conversation Architecture}
-\paragraph{}The core of the business interaction occurs within the conversation module, designed to facilitate secure and trackable communication:
+\paragraph{}The conversation module supports communication between users within the system.
 \begin{itemize}
-    \item \textbf{Participant Abstraction}: Conversations support different participant types (Company vs. Creator Social Profile, Creator Social Profile vs. Creator Social Profile, Company vs. Company) through a flexible participant model, ensuring the conversation context is correctly mapped to the entity performing the action.
-    \item \textbf{Conversation Management:} Beyond standard messaging pipelines, the system handles complex UI/UX and synchronization requirements to ensure a modern, fluid interaction environment:
+    \item \textbf{Participant Model}: Conversations support different participant types (Company vs. Creator Social Profile, Creator Social Profile vs. Creator Social Profile, Company vs. Company) through a flexible participant model, ensuring the conversation context is correctly mapped to the entity performing the action.
+    \item \textbf{Conversation Management:} The system stores message state information and supports synchronization between participants.
         \begin{itemize}
             \item \textit{Message Lifecycle States:} When a participant edits a message, the system updates an \texttt{is\_edited} boolean flag to true, signaling the frontend to display an "edited" badge to both users, maintaining transparency. Similarly, message deletion utilizes a soft-delete pattern, turning the \texttt{is\_deleted} flag to true instructs the frontend to stop rendering the message content, ensuring privacy while maintaining database auditability.
-            \item \textit{Unread Message Counting:} The application dynamically computes and maintains accurate counts of unread messages per participant, rendering visual badges on the dashboard to notify users of pending interactions.
-            \item \textit{Background Read Synchronization:} Before a user even fully enters a conversation view, the architecture pre-evaluates and synchronizes the session state in the background against the ID of the last sent or received message. This precise tracking allows the database layer to map exactly where the user left off in the chat history.
+            \item \textit{Unread Message Counting:} The system computes unread message counts per participant, allowing the frontend to display this information in the user interface.
+            \item \textit{Background Read Synchronization:} Before a user even fully enters a conversation view, the architecture pre-evaluates and synchronizes the session state in the background against the ID of the last sent or received message. This information allows the system to determine which messages have already been read.
             \item \textit{Real-Time State Tracking:} Leveraged via native SignalR client integrations, the platform enables bidirectional web socket functionality. This updates the chat layout instantly with message states, edits, or incoming deliveries in real-time as other participants interact, completely eliminating the need for manual browser refreshes.
         \end{itemize}
-    \item \textbf{Organization through Tagging}: To streamline high-volume outreach and manage complex negotiation lifecycles, the platform introduces a Conversation Tagging system that acts as a private tool. The architecture provides structural automation paired with full user autonomy.
+    \item \textbf{Organization through Tagging}: The system allows users to create and assign private tags to conversations.Tags can be used by each user to organize conversations according to their own workflow.
     \begin{itemize}
-    \item \textit{Predefined System Baseline:} Out of the box, the database seeds a set of standard, industry-specific operational tags designed to map traditional partnership pipelines. These include:
+    \item \textit{Default tags:} Out of the box, the database seeds a set of standard, industry-specific operational tags designed to map traditional partnership pipelines. These include:
     \begin{itemize}
         \item \texttt{Contacted} (Hex: \texttt{\#3498db}) — Signifies initial outreach.
         \item \texttt{Negotiating} (Hex: \texttt{\#f1c40f}) — Indicates active discussion.
         \item \texttt{Accepted} (Hex: \texttt{\#2ecc71}) — Marks a successful match and partnership agreement.
         \item \texttt{Rejected} (Hex: \texttt{\#e74c3c}) — Partnership rejection.
     \end{itemize}
-    \item \textit{Dynamic Customization Layer:} If the default taxonomy does not fit a user's unique workflow, the system empowers them to create entirely new tags, defining unused names and unique hexadecimal color codes to match their corporate or personal organizational style.
-    \item \textit{Asymmetric Counterparty Isolation:} Crucially, from an architectural and privacy standpoint, these tag assignments are strictly asymmetric and encapsulated to the local account. When a user tags a conversation (e.g., marking an agency as "Negotiating" or "Rejected"), this metadata is exclusively visible within their own dashboard workspace. The counterparty remains entirely unaware of these secret classifications, preventing negotiation friction and ensuring absolute privacy during outreach management.
+    \item \textit{Custom tags:} If the default tags do not fit a user's workflow, the system allows the user to create additional tags by defining a name and a hexadecimal color code.
+    \item \textit{Private visibility:} Tag assignments are private to the user who creates or assigns them. For example, when a user marks a conversation as \texttt{Negotiating} or \texttt{Rejected}, that classification is only visible to that user. The other participant does not have access to these private tags.
 \end{itemize}
 \end{itemize}
 
-\subsection{History Tracking and Recommendation Engine}
-\paragraph{}To elevate user interface and break away from static layouts, the platform incorporates an analytical History Tracking system tied to an intelligent Recommendation Engine. The inclusion of this feature stems from a commitment to delivering a highly modern, data-driven user experience, ensuring that every user is presented with a personalized dashboard feed populated with entities that align with their active market interests and past search behaviors.
-\subsubsection{Conceptual Workflow and Feed Customization}
-\paragraph{}The tracking architecture continuously captures interaction telemetry by logging profile view events whenever a user interacts with a company page or a creator's social channel. This raw history serves as the primary data foundation to make appear individual interest profiles. To maximize relevance, the engine applies distinct recommendation behaviors depending on the authenticated user's role:
+\subsection{History Tracking and Recommendations}
+\paragraph{}The backend stores profile-view history and uses this information, together with previous search parameters, to support recommendation features. This feature allows the system to generate dashboard recommendations using information from previous profile views and search parameters, helping users discover companies or creator social profiles related to their past interactions.
+\subsubsection{Recommendation Workflow}
+
+\paragraph{}The system records profile-view events whenever a user opens a company profile or a creator social profile. This information, together with previous search parameters, is used as input for the recommendation process. The recommendation behavior differs depending on the type of entity being recommended. Figure~\ref{fig} illustrates the logic behind this process.
+
 \begin{itemize}
-    \item \textbf{Targeted Company Feeds:} When a user searches for corporate entities, the parameters and metadata of those searches are logged in their history. The engine then processes this data to dynamically recommend new company profiles that share similar characteristics, such as market sectors, geographic location, and business scale, with the ones the user has been actively searching for.
-    \item \textbf{Targeted Creator Social Profile Feeds:} On the other hand, when a user searches for content creators, those search criteria are preserved. The engine uses this history to filter and promote new creator social profiles whose platform focuses, audience metrics, and pricing structures match the niche and scope of the user's past search behavior.
+\item \textbf{Company recommendations:} When a user searches for companies, the search parameters can be stored and later used to recommend company profiles with similar characteristics. These characteristics may include sectors, headquarters country and company size.
+\item \textbf{Creator social profile recommendations:} When a user searches for creator social profiles, the search criteria can also be stored for later use. The recommendation function can use criteria such as platform, sectors, audience size and price range to return creator social profiles related to previous searches.
 \end{itemize}
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
-    \makebox[\textwidth][c]{
-        \includegraphics[width=0.95\textwidth]{./img/Recomendation_System.png}
-    }
+    \includegraphics[width=0.95\textwidth]{./img/Recomendation_System.png}
     \caption{Recommendation System Architecture}
     \label{fig:recommendation-system}
 \end{figure}

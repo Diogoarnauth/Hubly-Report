@@ -23,7 +23,7 @@ Furthermore, the backend also includes a \textbf{Transaction Manager}, used in o
 
 \subsection{Project Structure and Dependency Management} \label{subsec:project-structure}
 
-\paragraph{} The backend solution is organized into four distinct .NET projects, each defined by an individual \texttt{.csproj} file and managed with its own set packages. This modularization enforces physical architectural boundaries and dictates the dependency graph at the compilation level:
+\paragraph{} The backend solution is organized into four distinct .NET projects, each defined by an individual \texttt{.csproj} file and managed with its own set packages. This organization defines the architectural boundaries of the backend and makes the dependency structure explicit at compilation time:
 
 \begin{description}
     \item[\textbf{Hubly.Domain}:] Acts as the system core, containing exclusively the business entities and domain models. It is designed to be agnostic of any persistence technology or framework, maintaining independence from the other solution layers.
