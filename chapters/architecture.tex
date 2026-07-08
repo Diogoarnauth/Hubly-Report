@@ -11,6 +11,8 @@ Figure \ref{fig:architecture} illustrates the main architectural components of H
 
 \section{Architecture Overview}
 
+TODO, CLIENT SIDE??
+
 \paragraph{}Hubly follows a client-server architecture. Users interact with the system through a web browser, which loads the frontend application and sends requests to the backend API. The backend is responsible for processing application operations, enforcing business rules and accessing persistent data stored in the relational database.
 
 A reverse proxy is placed between the browser and the internal application services. Its role is to receive incoming HTTP requests and route them to the appropriate component. Requests related to the web interface are forwarded to the frontend application, while API requests are forwarded to the backend service. The backend is the only component that communicates directly with the database.
@@ -59,7 +61,7 @@ js-cookie~\cite{jscookie} & JavaScript library for handling browser cookies. & U
 \end{table}
 
 \subsection{Backend}
-\paragraph{}The backend API is responsible for processing the operations requested by the frontend. It implements the application logic related to users, companies, creators, social profiles, search, conversations, tags, ratings and recommendations.
+\paragraph{}The backend API is responsible for processing the operations requested by the frontend. It implements the application logic related to users, companies, creators, social profiles, search, conversations, tags, ratings, recommendations, coworking teams, invitations and audit logs.
 
 The backend was developed using ASP.NET Core~\cite{aspnetcore} and exposes a REST API consumed by the frontend application. It also performs authentication and authorization checks, validates business rules and coordinates access to persistent data. Database operations are abstracted through Entity Framework Core, preventing the frontend from interacting directly with the database.
 
@@ -102,7 +104,7 @@ Items = success.Items.Adapt<List>(),
 
 \subsection{Database}
 
-\paragraph{}The database component is responsible for storing the persistent data used by the system. Hubly uses a PostgreSQL~\cite{postgreSql} relational database to store information about users, companies, creators, social profiles, sectors, conversations, messages, tags, ratings, authentication data and profile-view history.
+\paragraph{}The database component is responsible for storing the persistent data used by the system. Hubly uses a PostgreSQL~\cite{postgreSql} relational database to store information about users, companies, creators, social profiles, sectors, conversations, messages, tags, ratings, authentication data, profile-view history, coworkers, coworking invitations.
 
 The database is not directly accessible from the frontend or from the browser. All interactions with the database are performed by the backend API. In the containerized environment, the database runs in the hubly-db container and is connected only to the db-net network.
 

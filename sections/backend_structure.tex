@@ -71,11 +71,11 @@ The process is organized into the following steps:
 \begin{enumerate}
 \item \textbf{Token extraction:} The filter obtains the authentication token from the incoming HTTP request. Depending on the client flow, the token may be read from the request headers or from the application cookies.
 
-\item \textbf{Token validation:} The \texttt{TokenProcessor} decrypts and evaluates the structural integrity, signature, and expiration date of the extracted token, ensuring that the current session is active and untampered with.
+\item \textbf{Token validation:} The \texttt{TokenProcessor} decrypts and evaluates the structural integrity, signature, and expiration date of the extracted token, ensuring that the current session is active and untampered with. Apart of that, it checks, in case of the controller method having a AuthenticedCoWorker parameter, if the token came from an CoWorking user, or an admin user. 
 
 \item \textbf{Account status validation:} After the token is validated, the filter also verifies domain-specific access conditions. In Hubly, this includes checking whether the user's email address has been confirmed. If the email is not confirmed, the request is rejected with a \texttt{403 Forbidden} response, following the Problem Details response format.
 
-\item \textbf{Authenticated user binding:} When all validation steps succeed, the filter creates an \texttt{AuthenticatedUser} object containing the resolved user identity. This object is stored in \texttt{HttpContext.Items}, making it available during the remaining execution of the request. A custom \texttt{AuthenticatedUserModelBinder} is then used to bind this object directly to controller action parameters when required.
+\item \textbf{Authenticated user binding:} When all validation steps succeed, the filter creates an \texttt{AuthenticatedUser} object (and in case of, an \texttt{AuthenticatedCoWorker} object) containing the resolved user identity. This objects are stored in \texttt{HttpContext.Items}, making them available during the remaining execution of the request. A custom \texttt{AuthenticatedUserModelBinder} is then used to bind this objects directly to controller action parameters when required.
 
 \end{enumerate}
 
@@ -94,7 +94,8 @@ This approach provides a consistent way to apply authentication checks across pr
 
 \item \textbf{Separation of concerns:} Controller actions do not need to manually validate the authentication token. This allows controllers to focus on the application operation they are responsible for.
 
-\item \textbf{Declarative Security:} Security boundaries are explicitly declared via controller method signatures using the \texttt{AuthenticatedUser} parameter. This self-documenting pattern greatly improves readability and simplifies architectural security audits.
+
+\item \textbf{Declarative Security:} Security boundaries are explicitly declared via controller method signatures using the \texttt{AuthenticatedUser} and \texttt{AuthenticatedCoWorker} parameters. This self-documenting pattern greatly improves readability and simplifies architectural security audits.
 
 \end{itemize}
 
@@ -171,3 +172,4 @@ Figure~\ref{fig:email-service-structure} illustrates the email confirmation work
 \end{figure}
 
 This process ensures that users can only access protected functionality after confirming the email address associated with their account.
+

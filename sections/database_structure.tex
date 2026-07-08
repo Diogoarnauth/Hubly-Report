@@ -3,7 +3,7 @@
 \begin{figure}[ht]
     \centering
     \makebox[\textwidth][c]{
-    \includegraphics[width=0.9\textwidth]{./img/SimpleERModel.png}
+    \includegraphics[width=1\textwidth]{./img/SimpleERModel.png}
     }
     \caption{Database Structure without attributes, Check complete ER Model on Appendix \ref{fig:er_model}}
     \label{fig:database_structure}
@@ -66,6 +66,10 @@ The relational model was designed to support the functional and structural needs
     \item \textbf{CONVERSATION\_TAGS}: Allows users to create custom categorization labels for their communication chats. Each tag is owned by a specific \texttt{user\_id} and defined by a name and a \texttt{color\_hex}, enabling a personalized tag experience. The \texttt{unique\_user\_tag\_name} constraint ensures that users do not define duplicate tags within their own workspace.
 
     \item \textbf{CONVERSATION\_TAG\_ASSIGNMENTS}: Implements the association between a conversation and the tags assigned by a specific user. The composite primary key ensures that each conversation-tag assignment is unique per user, while \texttt{updated\_at} provides the necessary audit trail for tag modifications.
+ 
+    \item \textbf{CO\_WORKERS}: Represents the relationship between a profile owner and a coworker user. Each record links a \texttt{user\_id}, corresponding to the coworker, to an \texttt{owner\_id}, corresponding to the user who owns the company or creator profile. The \texttt{joined\_at} attribute stores the date and time when the coworker joined the workspace. The \texttt{chk\_not\_self\_owner} constraint prevents a user from being registered as their own coworker, preserving the distinction between owner and coworker roles.
+
+    \item \textbf{CO\_WORKER\_INVITES}: Stores coworking invitations sent by profile owners to other users. Each invitation includes the \texttt{owner\_id}, the invited user's email address (\texttt{co\_worker\_email}), the invitation status, the creation timestamp and the expiration date. The \texttt{status} attribute is constrained to the values \texttt{WAITING}, \texttt{ACCEPTED} and \texttt{REJECTED}, allowing the system to track the invitation lifecycle. The \texttt{unique\_pending\_invite} constraint prevents duplicate invitations from the same owner to the same email address.
 
 \end{itemize}
 

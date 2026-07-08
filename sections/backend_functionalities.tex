@@ -50,6 +50,18 @@ This ensures that actions such as creating a user record, generating an initial 
 \end{itemize}
 \end{itemize}
 
+\subsection{Coworking and Audit Logs}
+
+\paragraph{}The backend includes coworking functionality, allowing company and creator profile owners to invite other users to collaborate within the same profile environment. This feature supports shared management of company profiles or creator social profiles, enabling multiple users to access and manage the same workspace.
+
+The coworking workflow is based on invitations. A profile owner can invite another user by email to join a coworking team. The system stores the invitation and its current status, such as \texttt{WAITING}, \texttt{ACCEPTED} or \texttt{REJECTED}. The invited user can accept or reject the invitation, while the profile owner can cancel pending invitations or remove coworkers from the team.
+
+Access to shared profile operations is validated by the backend. When a user performs an operation within a company or creator profile, the system verifies whether the user is the profile owner or an authorized coworker. This validation prevents users from accessing or modifying profile data without permission.
+
+The backend also records relevant operations through audit logs. These logs store information about actions performed within a shared workspace, such as coworker invitations, invitation responses, coworker removal or other profile-related operations. Each log entry can include the user responsible for the action, the type of operation performed, the affected entity and the timestamp of the action.
+
+This functionality provides traceability within shared company and creator profiles, allowing profile owners to monitor relevant activity performed by different users in the same workspace.
+
 \subsection{History Tracking and Recommendations}
 \paragraph{}The backend stores profile-view history and uses this information, together with previous search parameters, to support recommendation features. This feature allows the system to generate dashboard recommendations using information from previous profile views and search parameters, helping users discover companies or creator social profiles related to their past interactions.
 \subsubsection{Recommendation Workflow}
