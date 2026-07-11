@@ -54,7 +54,7 @@ This ensures that actions such as creating a user record, generating an initial 
 \paragraph{}The backend stores profile-view history and uses this information, together with previous search parameters, to support recommendation features. This feature allows the system to generate dashboard recommendations using information from previous profile views and search parameters, helping users discover companies or creator social profiles related to their past interactions.
 \subsubsection{Recommendation Workflow}
 
-\paragraph{}The system records profile-view events whenever a user opens a company profile or a creator social profile. This information, together with previous search parameters, is used as input for the recommendation process. The recommendation behavior differs depending on the type of entity being recommended. Figure~\ref{fig} illustrates the logic behind this process.
+\paragraph{}The system records profile-view events whenever a user opens a company profile or a creator social profile. This information, together with previous search parameters, is used as input for the recommendation process. The recommendation behavior differs depending on the type of entity being recommended. Figure~\ref{fig:recommendation-system} illustrates the logic behind this process.
 
 \begin{itemize}
 \item \textbf{Company recommendations:} When a user searches for companies, the search parameters can be stored and later used to recommend company profiles with similar characteristics. These characteristics may include sectors, headquarters country and company size.
