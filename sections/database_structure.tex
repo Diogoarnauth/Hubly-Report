@@ -14,7 +14,7 @@
     \begin{subfigure}[b]{\textwidth}
         \centering
         \includegraphics[width=0.9\textwidth]{./img/table_1.png}
-        \caption{Atributte Table 1}
+        \caption{Attribute Table 1}
         \label{fig:sub:table1}
     \end{subfigure}
 
@@ -22,7 +22,7 @@
     \begin{subfigure}[b]{\textwidth}
         \centering
         \includegraphics[width=0.9\textwidth]{./img/table_2.png}
-        \caption{Atributte Table 2}
+        \caption{Attribute Table 2}
         \label{fig:sub:table2}
     \end{subfigure}
     \caption{Attributes of every entity in the database}
@@ -71,6 +71,7 @@ The relational model was designed to support the functional and structural needs
 
     \item \textbf{CO\_WORKER\_INVITES}: Stores coworking invitations sent by profile owners to other users. Each invitation includes the \texttt{owner\_id}, the invited user's email address (\texttt{co\_worker\_email}), the invitation status, the creation timestamp and the expiration date. The \texttt{status} attribute is constrained to the values \texttt{WAITING}, \texttt{ACCEPTED} and \texttt{REJECTED}, allowing the system to track the invitation lifecycle. The \texttt{unique\_pending\_invite} constraint prevents duplicate invitations from the same owner to the same email address.
 
+    \item \textbf{AUDITLOGS}: Stores audit logs for various system events. Each log entry includes an auto-incrementing identifier (\texttt{id}), the ID of the user who performed the action (\texttt{userId}), the ID of the coworker involved if applicable (\texttt{coworkerid}), the specific action performed (\texttt{action}), and the record's creation date and time (\texttt{timestamp}).
 \end{itemize}
 
 \section{Database Functions and Recommendation}
