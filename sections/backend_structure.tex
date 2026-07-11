@@ -23,7 +23,7 @@ Furthermore, the backend also includes a \textbf{Transaction Manager}, used in o
 
 \subsection{Project Structure and Dependency Management} \label{subsec:project-structure}
 
-\paragraph{} The backend solution is organized into four distinct .NET projects, each defined by an individual \texttt{.csproj} file and managed with its own set packages. This modularization enforces physical architectural boundaries and dictates the dependency graph at the compilation level:
+\paragraph{} The backend solution is organized into four distinct .NET projects, each defined by an individual \texttt{.csproj} file and managed with its own set packages. This organization defines the architectural boundaries of the backend and makes the dependency structure explicit at compilation time:
 
 \begin{description}
     \item[\textbf{Hubly.Domain}:] Acts as the system core, containing exclusively the business entities and domain models. It is designed to be agnostic of any persistence technology or framework, maintaining independence from the other solution layers.
@@ -70,7 +70,7 @@ The process is organized into the following steps:
 \begin{enumerate}
 \item \textbf{Parameter inspection and token extraction:} The filter first inspects the target controller action's parameters. If the action does not require either an \texttt{AuthenticatedUser} or an \texttt{AuthenticatedCoWorker}, the filter shorts-circuits early to save resources. Otherwise, it extracts the authentication token from the incoming HTTP request headers or application cookies, depending on the client flow.
 
-\item \textbf{Token validation:} The \texttt{TokenProcessor} decrypts and evaluates the structural integrity, signature, and expiration date of the extracted token, ensuring that the current session is active and untampered with.
+\item \textbf{Token validation:} The \texttt{TokenProcessor} decrypts and evaluates the structural integrity, signature, and expiration date of the extracted token, ensuring that the current session is active and untampered with. Apart of that, it checks, in case of the controller method having a AuthenticedCoWorker parameter, if the token came from an CoWorking user, or an admin user. 
 
 \item \textbf{Account status validation:} After the token is validated, the filter verifies domain-specific access conditions. In Hubly, this includes checking whether the user’s email address has been confirmed. If the email is not confirmed, the request is rejected with a \texttt{403 Forbidden} response, following the Problem Details response format.
 
@@ -95,7 +95,8 @@ This approach provides a consistent way to apply authentication checks across pr
 
 \item \textbf{Separation of concerns:} Controller actions do not need to manually validate the authentication token. This allows controllers to focus on the application operation they are responsible for.
 
-\item \textbf{Declarative Security:} Security boundaries are explicitly declared via controller method signatures using the \texttt{AuthenticatedUser} parameter. This self-documenting pattern greatly improves readability and simplifies architectural security audits.
+
+\item \textbf{Declarative Security:} Security boundaries are explicitly declared via controller method signatures using the \texttt{AuthenticatedUser} and \texttt{AuthenticatedCoWorker} parameters. This self-documenting pattern greatly improves readability and simplifies architectural security audits.
 
 \end{itemize}
 
@@ -172,3 +173,4 @@ Figure~\ref{fig:email-service-structure} illustrates the email confirmation work
 \end{figure}
 
 This process ensures that users can only access protected functionality after confirming the email address associated with their account.
+
