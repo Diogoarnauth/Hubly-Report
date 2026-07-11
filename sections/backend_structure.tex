@@ -64,18 +64,19 @@ Furthermore, the backend also includes a \textbf{Transaction Manager}, used in o
 \subsection{Authentication and Authorization Pipeline} \label{subsec:auth_pipeline}
 
 \paragraph{}To enforce strict security boundaries across the Hubly API, most endpoints are protected by a centralized interception mechanism that validates both user authentication and account activation status before any business logic is executed. Specifically, the system mandates that every inbound request to a protected resource must originate from a legitimate, active session belonging to a user who has successfully verified their email address.
-
 \subsubsection{Pipeline Architecture}
-\paragraph{}The authentication process is implemented through a action filter, \texttt{RequireAuthenticationAttribute}, which is executed during the ASP.NET Core request pipeline. This filter works together with the \texttt{TokenProcessor} service to validate the request and provide the authenticated user information to the controller.
+\paragraph{}The authentication process is implemented through an action filter, \texttt{RequireAuthenticationAttribute}, which is executed during the ASP.NET Core request pipeline. This filter works together with the \texttt{TokenProcessor} service to validate the request, resolve identity relations, and provide the authenticated context to the controller.
 The process is organized into the following steps:
 \begin{enumerate}
-\item \textbf{Token extraction:} The filter obtains the authentication token from the incoming HTTP request. Depending on the client flow, the token may be read from the request headers or from the application cookies.
+\item \textbf{Parameter inspection and token extraction:} The filter first inspects the target controller action's parameters. If the action does not require either an \texttt{AuthenticatedUser} or an \texttt{AuthenticatedCoWorker}, the filter shorts-circuits early to save resources. Otherwise, it extracts the authentication token from the incoming HTTP request headers or application cookies, depending on the client flow.
 
 \item \textbf{Token validation:} The \texttt{TokenProcessor} decrypts and evaluates the structural integrity, signature, and expiration date of the extracted token, ensuring that the current session is active and untampered with.
 
-\item \textbf{Account status validation:} After the token is validated, the filter also verifies domain-specific access conditions. In Hubly, this includes checking whether the user's email address has been confirmed. If the email is not confirmed, the request is rejected with a \texttt{403 Forbidden} response, following the Problem Details response format.
+\item \textbf{Account status validation:} After the token is validated, the filter verifies domain-specific access conditions. In Hubly, this includes checking whether the user’s email address has been confirmed. If the email is not confirmed, the request is rejected with a \texttt{403 Forbidden} response, following the Problem Details response format.
 
-\item \textbf{Authenticated user binding:} When all validation steps succeed, the filter creates an \texttt{AuthenticatedUser} object containing the resolved user identity. This object is stored in \texttt{HttpContext.Items}, making it available during the remaining execution of the request. A custom \texttt{AuthenticatedUserModelBinder} is then used to bind this object directly to controller action parameters when required.
+\item \textbf{Identity and relation resolution:} Once the active user context is verified, the filter determines if the endpoint explicitly requests coworker context. The \texttt{TokenProcessor} queries the database to evaluate if the authenticated identity is registered as a co-worker linked to an organization owner account. If such a relation exists and is required, the service resolves a dual-context state: it fetches the primary workspace owner's profile (as the \texttt{AuthenticatedUser}) while preserving the logged-in entity's details (as the \texttt{AuthenticatedCoWorker}). If no coworker relation is required or found, it defaults to treating the current user as the primary owner.
+
+\item \textbf{Context storage and model binding:} The resolved owner and coworker entities are safely stored in \texttt{HttpContext.Items} under their respective keys (\texttt{AuthenticatedUser} and \texttt{AuthenticatedCoWorker}), making them accessible throughout the remainder of the HTTP request lifecycle. Finally, a custom \texttt{AuthenticatedUserModelBinderProvider} maps the requested action parameters to the \texttt{AuthenticatedUserModelBinder}. This specialized binder dynamically extracts the correct entity from the HTTP context and handles runtime type conversions automatically, ensuring that controllers seamlessly receive the exact identity context they demanded in their signature.
 
 \end{enumerate}
 

@@ -1,4 +1,3 @@
-\paragraph{} FALTA VER ESTA PARTE TODA 
 \section{Backend Key Functionalities}
 
 \subsection{User Management and Authentication}
@@ -68,3 +67,52 @@ This ensures that actions such as creating a user record, generating an initial 
     \caption{Recommendation System Architecture}
     \label{fig:recommendation-system}
 \end{figure}
+
+
+\subsection{Collaborative Coworking Framework}
+\paragraph{}The Collaborative Coworking Framework enables multi-user access to a shared workspace without requiring the sharing of credentials. This mechanism establishes an operational hierarchy separating the workspace owner (administrator) from invited operators.
+
+\subsubsection{Pipeline Integration and Context Resolution}
+\paragraph{}As outlined in the request pipeline analysis, the coworker state is evaluated before the request reaches the application logic. The \texttt{RequireAuthenticationAttribute} filter and the \texttt{TokenProcessor} resolve the execution context by extracting the operator details into an \texttt{AuthenticatedCoWorker} instance, while simultaneously identifying the workspace owner as an \texttt{AuthenticatedUser}. Both objects are stored within the \texttt{HttpContext.Items} dictionary and mapped via custom model binding to be available at the controller level.
+
+\subsubsection{Service Layer Abstraction and Audit Logging}
+\paragraph{}Past the API controller layer, the underlying business services and the persistence layer operate independently of the specific identity that initiated the request. Data mutations, campaign configurations, and state updates are processed within the scope of the primary administrator's workspace identity.
+
+\paragraph{}This design isolates core domain logic from identity validation rules, allowing the coworker to execute updates on behalf of the administrator. Because the service layer processes these changes within the context of the workspace owner, tracking individual actions within a shared workspace requires a decoupled tracking mechanism. To ensure accountability and record which physical identity performed each state modification, the architecture incorporates a dedicated Audit Logging system, as detailed in the following section.
+
+
+\begin{figure}[ht]
+    \centering
+    \makebox[\textwidth][c]{
+        \includegraphics[width=0.95\textwidth]{./img/Team_Hierarchy_Admin.png}
+    }
+    \caption{Team Hierarchy - Admin Vision}
+    \label{fig:team-hierarchy}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \makebox[\textwidth][c]{
+        \includegraphics[width=0.95\textwidth]{./img/Team_Hierarchy_CoWorker.png}
+    }
+    \caption{Team Hierarchy - CoWorker Vision}
+    \label{fig:team-hierarchy}
+\end{figure}
+
+\subsection{Asynchronous Audit Logging Architecture}
+\paragraph{}To ensure operational accountability within shared multi-user workspaces, the platform incorporates a generalized, decoupled audit logging architecture. This framework isolates the responsibility of tracking system state changes from the primary request-execution threads, preventing administrative monitoring from introducing performance overhead or blocking user interactions.
+
+\subsubsection{Execution Lifecycle and Queue Ingestion}
+\paragraph{}The logging framework is integrated directly within the core business service layer, executing alongside the application's domain logic. When a service processes a state-changing operation, it aggregates the relevant execution metadata—such as identifiers for both the workspace owner (\texttt{UserId}) and the active operator (\texttt{CoWorkerId})—into an \texttt{AuditEntry} structure.
+
+\paragraph{}This entry encapsulates the specific action name along with a contextual data payload resolved during the execution workflow. Once constructed, the \texttt{AuditEntry} is dispatched directly to an in-memory storage component managed by the \texttt{AuditQueue} class. This dispatch marks the transition of the audit record from the synchronous application workflow into an isolated, asynchronous processing pipeline.
+
+\subsubsection{Asynchronous Processing and Deferred Persistence}
+\paragraph{}Once an item is successfully queued, its subsequent formatting and physical database persistence are handled independently by a background infrastructure layer. The \texttt{AuditBackgroundProcessor} class operates as a long-running hosted service by extending the framework's native \texttt{BackgroundService}, continuously monitoring the queue via non-blocking asynchronous operations.
+
+\paragraph{}Upon retrieving an entry from the queue, the processor establishes a transient dependency injection scope (\texttt{IServiceProvider.CreateScope}) to isolate the operation from any active HTTP context lifecycle. The background processing then executes the following phases:
+\begin{itemize}
+    \item \textbf{Reflection-Based Interpolation:} The metadata is routed through the \texttt{IAuditService} to the \texttt{AuditFormatter} utility, which uses reflection mechanisms to dynamically inspect the properties of the generic payload object.
+    \item \textbf{Template Resolution:} The extracted parameters are mapped onto a static dictionary of predefined text templates, substituting structural placeholders with the actual runtime values of the operation to construct a human-readable description.
+\end{itemize}
+\paragraph{}Following this interpolation phase, the service instantiates the final \texttt{AuditLog} domain entity, appends a coordinated universal timestamp (\texttt{DateTime.UtcNow}), and performs a database write operation through the \texttt{IAuditRepository} to persist the historical record.
