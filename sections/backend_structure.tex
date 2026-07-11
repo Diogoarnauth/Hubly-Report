@@ -70,7 +70,7 @@ The process is organized into the following steps:
 \begin{enumerate}
 \item \textbf{Parameter inspection and token extraction:} The filter first inspects the target controller action's parameters. If the action does not require either an \texttt{AuthenticatedUser} or an \texttt{AuthenticatedCoWorker}, the filter shorts-circuits early to save resources. Otherwise, it extracts the authentication token from the incoming HTTP request headers or application cookies, depending on the client flow.
 
-\item \textbf{Token validation:} The \texttt{TokenProcessor} decrypts and evaluates the structural integrity, signature, and expiration date of the extracted token, ensuring that the current session is active and untampered with. Apart of that, it checks, in case of the controller method having a AuthenticedCoWorker parameter, if the token came from an CoWorking user, or an admin user. 
+\item \textbf{Token validation:} The \texttt{TokenProcessor} decrypts and evaluates the structural integrity, signature, and expiration date of the extracted token, ensuring that the current session is active and untampered with. Apart of that, it checks, in case of the controller method having a AuthenticatedCoWorker parameter, if the token came from a CoWorking user, or an admin user. 
 
 \item \textbf{Account status validation:} After the token is validated, the filter verifies domain-specific access conditions. In Hubly, this includes checking whether the user’s email address has been confirmed. If the email is not confirmed, the request is rejected with a \texttt{403 Forbidden} response, following the Problem Details response format.
 
